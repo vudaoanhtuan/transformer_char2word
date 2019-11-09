@@ -1,9 +1,11 @@
 import torch
 import torch.nn as nn
 from torch.utils import data
+
 import pandas as pd
 import spacy
 
+from tqdm import tqdm
 from keras.preprocessing.sequence import pad_sequences
 
 class Tokenizer:
@@ -91,7 +93,7 @@ class Dataset(data.Dataset):
             corpus = f.read().split('\n')[:-1]
         corpus = [x.split('\t') for x in corpus]
 
-        tokens = [tokenizer.tokenize(*x) for x in corpus]
+        tokens = [tokenizer.tokenize(*x) for x in tqdm(corpus)]
         self.src = [x[0] for x in tokens]
         self.tgt = [x[1] for x in tokens]
 
