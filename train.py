@@ -1,5 +1,6 @@
 import os
 import argparse
+import logging
 
 import torch
 import torch.nn as nn
@@ -19,9 +20,14 @@ parser.add_argument('--batch_size', default=32, type=int)
 parser.add_argument('--learning_rate', default=1e-3, type=float)
 parser.add_argument('--num_epoch', default=10, type=int)
 parser.add_argument('--device', default='cpu')
+parser.add_argument('--log_file', default='log.txt')
 
 if __name__ == "__main__":
     args = parser.parse_args()
+
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+    logging.basicConfig(filename=args.log_file, level=logging.INFO)
 
     print("Load vocab")
     tokenizer = load_tokenizer(args.src_vocab, args.tgt_vocab)
