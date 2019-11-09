@@ -102,21 +102,3 @@ class Model(nn.Module):
 
         return output, loss
 
-
-if __name__ == "__main__":
-
-    from dataset import *
-    from torch.utils.data import DataLoader
-
-    tokenizer = load_tokenizer('data/src_vocab.txt', 'data/tgt_vocab.txt')
-    train_ds = Dataset('data/train.tsv', tokenizer)
-    train_dl = DataLoader(train_ds, shuffle=True, batch_size=2)
-
-    model = Model(len(tokenizer.src_stoi), len(tokenizer.tgt_stoi), 64, 2, 2, 2, 256)
-    for src, tgt in train_dl:
-        src = src.long()
-        tgt = tgt.long()
-        tgt_inp = tgt[:, :-1]
-        tgt_lbl = tgt[:, 1:]
-        _, loss = model(src, tgt_inp, tgt_lbl)
-        print(loss.item())

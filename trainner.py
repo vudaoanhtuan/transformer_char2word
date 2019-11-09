@@ -74,6 +74,3 @@ class Trainer:
             val_loss = self.run_iterator(self.test_dl, is_training=False)
             torch.save(self.model.state_dict(), os.path.join(self.weight_dir, 'model.%02d.h5'%e))
 
-
-
-

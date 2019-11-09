@@ -107,14 +107,3 @@ class Dataset(data.Dataset):
         tgt = self.tgt[index]
         return src, tgt
 
-
-if __name__ == "__main__":
-    tokenizer = load_tokenizer('data/src_vocab.txt', 'data/tgt_vocab.txt')
-    ds = Dataset('data/dump.tsv', tokenizer, src_pad_len=10, tgt_pad_len=5)
-    dl = data.DataLoader(ds, batch_size=3, shuffle=True)
-    for src, tgt in dl:
-        print(src)
-        print(tgt)
-        print()
-
-
