@@ -25,6 +25,7 @@ class Trainer:
         self.test_dl = test_dl
 
         self.device = torch.device(device)
+        self.model.to(self.device)
 
         self.log_file = log_file
         self.weight_dir = weight_dir

@@ -73,6 +73,11 @@ class Model(nn.Module):
         # target self-attention mask, decoder side: word at position i depend only on word from 0 to i
         tgt_mask = generate_square_subsequent_mask(tgt_inp.shape[1]) # TxT
 
+        if src_inp.is_cuda:
+            src_padding_mask = src_padding_mask.cuda()
+            tgt_padding_mask = tgt_padding_mask.cuda()
+            tgt_mask = tgt_mask.cuda()
+
         src_inp = self.src_embedding(src_inp)
         src_inp = self.pos_embedding(src_inp) # BxSxE
         src_inp = src_inp.transpose(0,1) # SxBxE
