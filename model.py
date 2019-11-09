@@ -1,0 +1,122 @@
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+def generate_square_subsequent_mask(sz):
+    mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
+    mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
+    return mask
+
+def generate_padding_mask(x, padding_value=0):
+    # x: BxS
+    mask = x==padding_value
+    return mask
+
+class PositionalEncoder(nn.Module):
+    def __init__(self, d_model, dropout=0.1, max_seq_len=5000):
+        super().__init__()
+        self.d_model = d_model
+        self.dropout = nn.Dropout(dropout)
+        # create constant 'pe' matrix with values dependant on 
+        # pos and i
+        pe = torch.zeros(max_seq_len, d_model)
+        for pos in range(max_seq_len):
+            for i in range(0, d_model, 2):
+                pe[pos, i] = \
+                np.sin(pos / (10000 ** ((2 * i)/d_model)))
+                pe[pos, i + 1] = \
+                np.cos(pos / (10000 ** ((2 * (i + 1))/d_model)))
+        pe = pe.unsqueeze(0)
+        self.register_buffer('pe', pe)
+ 
+    
+    def forward(self, x):
+        # make embeddings relatively larger
+        x = x * np.sqrt(self.d_model)
+        #add constant to embedding
+        seq_len = x.size(1)
+        pe = self.pe[:,:seq_len].clone().detach()
+        if x.is_cuda:
+            pe = pe.cuda()
+        x = x + pe
+        return self.dropout(x)
+
+class Model(nn.Module):
+    def __init__(self, src_vocab_len, tgt_vocab_len, d_model=512, nhead=8, num_encoder_layers=6,
+                 num_decoder_layers=6, dim_feedforward=2048, dropout=0.1, activation="relu"):
+        super().__init__()
+        self.src_padding_value = 0
+        self.tgt_padding_value = 0
+
+        self.pos_embedding = PositionalEncoder(d_model, dropout=dropout)
+        self.src_embedding = nn.Embedding(src_vocab_len, d_model)
+        self.tgt_embedding = nn.Embedding(tgt_vocab_len, d_model)
+        self.transformer = nn.Transformer(
+            d_model=d_model, nhead=nhead, num_encoder_layers=num_encoder_layers,
+            num_decoder_layers=num_decoder_layers, dim_feedforward=dim_feedforward, dropout=dropout,
+            activation=activation
+        )
+        self.linear_out = nn.Linear(d_model, tgt_vocab_len)
+
+    def forward(self, src_inp, tgt_inp, tgt_lbl):
+        # src_inp: BxS
+        # tgt_inp: BxT
+        # tgt_lbl: BxT
+
+        # src padding mask: prevent attention weight from padding word
+        src_padding_mask = generate_padding_mask(src_inp, self.src_padding_value) # BxS
+
+        # tgt padding mask: prevent attention weight from padding word
+        tgt_padding_mask = generate_padding_mask(tgt_inp, self.tgt_padding_value) # BxT
+
+        # target self-attention mask, decoder side: word at position i depend only on word from 0 to i
+        tgt_mask = generate_square_subsequent_mask(tgt_inp.shape[1]) # TxT
+
+        src_inp = self.src_embedding(src_inp)
+        src_inp = self.pos_embedding(src_inp) # BxSxE
+        src_inp = src_inp.transpose(0,1) # SxBxE
+
+        tgt_inp = self.tgt_embedding(tgt_inp)
+        tgt_inp = self.pos_embedding(tgt_inp) # BxTxE
+        tgt_inp = tgt_inp.transpose(0,1) # TxBxE
+
+        output = self.transformer(
+            src_inp, tgt_inp, 
+            src_key_padding_mask=src_padding_mask,
+            tgt_key_padding_mask=tgt_padding_mask,
+            tgt_mask=tgt_mask
+        ) # TxBxE
+
+        
+
+        output = output.transpose(0,1) # BxTxE
+        output = self.linear_out(output) # BxTxV
+
+
+        loss = F.cross_entropy(
+            output.reshape(-1, output.shape[-1]), 
+            tgt_lbl.reshape(-1), 
+            ignore_index=self.tgt_padding_value
+        )
+
+        return output, loss
+
+
+if __name__ == "__main__":
+
+    from dataset import *
+    from torch.utils.data import DataLoader
+
+    tokenizer = load_tokenizer('data/src_vocab.txt', 'data/tgt_vocab.txt')
+    train_ds = Dataset('data/train.tsv', tokenizer)
+    train_dl = DataLoader(train_ds, shuffle=True, batch_size=2)
+
+    model = Model(len(tokenizer.src_stoi), len(tokenizer.tgt_stoi), 64, 2, 2, 2, 256)
+    for src, tgt in train_dl:
+        src = src.long()
+        tgt = tgt.long()
+        tgt_inp = tgt[:, :-1]
+        tgt_lbl = tgt[:, 1:]
+        _, loss = model(src, tgt_inp, tgt_lbl)
+        print(loss.item())
