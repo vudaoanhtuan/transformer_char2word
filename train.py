@@ -23,13 +23,16 @@ parser.add_argument('--device', default='cpu')
 if __name__ == "__main__":
     args = parser.parse_args()
 
+    print("Load vocab")
     tokenizer = load_tokenizer(args.src_vocab, args.tgt_vocab)
 
+    print("Prepare data")
     train_ds = Dataset(args.train_file, tokenizer)
     test_ds = Dataset(args.test_file, tokenizer)
     train_dl = DataLoader(train_ds, shuffle=True, batch_size=args.batch_size)
     test_dl = DataLoader(test_ds, shuffle=False, batch_size=args.batch_size)
 
+    print("Init model")
     src_vocab_len = len(tokenizer.src_stoi)
     tgt_vocab_len = len(tokenizer.tgt_stoi)
 
@@ -37,4 +40,5 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     trainner = Trainer(model, optimizer, train_dl, test_dl, device=args.device)
 
+    print("Start training")
     trainner.train(args.num_epoch)
