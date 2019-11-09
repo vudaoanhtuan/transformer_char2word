@@ -61,12 +61,13 @@ class Trainer:
                     self.optimizer.step()
                     if self.scheduler is not None:
                         scheduler.step()
-            
-            total_loss += loss.item()
-            total_item += 1
 
-            pbar.update(1)
-            pbar.set_description(desc%(total_loss/total_item, loss.item(), self.optimizer.param_groups[0]['lr']))
+                total_loss += loss.item()
+                total_item += 1
+
+                pbar.update(1)
+                pbar.set_description(desc%(total_loss/total_item, loss.item(), self.optimizer.param_groups[0]['lr']))
+
         return total_loss/total_item
 
     def train(self, num_epoch=10):
