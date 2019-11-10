@@ -3,8 +3,6 @@ import spacy
 disable = ['vectors', 'textcat', 'tagger', 'parser', 'ner']
 spacy_tokenizer = spacy.load('en_core_web_sm', disable=disable)
 
-nltk_regex_tokenizer = RegexpTokenizer(r'\w+')
-
 class SpacyWordSpliter:
     def __init__(self, lower=True):
         disable = ['vectors', 'textcat', 'tagger', 'parser', 'ner']
