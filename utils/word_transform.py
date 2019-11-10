@@ -72,7 +72,7 @@ def get_typo(word):
     return word
 
 def gen_wrong_word(word):
-    func = [typo, teen_code, remove_tone]
+    func = [get_typo, get_teen_code, remove_tone]
     func = np.random.choice(func)
     word = func(word)
     return word
