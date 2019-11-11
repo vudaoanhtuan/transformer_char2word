@@ -49,7 +49,12 @@ if __name__=='__main__':
     with open(args.corpus) as f:
         corpus = f.read().split('\n')[:-1]
 
-    with open(args.output, 'w') as f:
-        for sent in tqdm(corpus):
-            s,w = generate_bisent(sent, word_list, max_len=args.max_len, percent=args.percent)
-            f.write(w+'\t'+s+'\n')
+    src = []
+    tgt = []
+    for sent in tqdm(corpus):
+        s,w = generate_bisent(sent, word_list, max_len=args.max_len, percent=args.percent)
+        src.append(w)
+        tgt.append(s)
+
+    df = pd.DataFrame({"src": src, "tgt": tgt})
+    df.to_csv(args.output, index=False, header=False, sep='\t')

@@ -13,13 +13,8 @@ parser.add_argument("--random_state", default=42, type=int)
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    with open(args.bisen_file) as f:
-        corpus = f.readlines()
-    
-    train, test = train_test_split(corpus, test_size=args.test_size, random_state=args.random_state)
+    df = pd.read_csv(args.bisen_file, sep='\t')
+    train_df, test_df = train_test_split(df, test_size=args.test_size, random_state=args.random_state)
 
-    with open(args.train_file, 'w') as f:
-        f.writelines(train)
-
-    with open(args.test_file, 'w') as f:
-        f.writelines(test)
+    train_df.to_csv(args.train_file, index=False, header=False, sep='\t')
+    test_df.to_csv(args.test_file, index=False, header=False, sep='\t')
