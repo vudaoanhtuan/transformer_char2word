@@ -1,5 +1,6 @@
 import os
 import argparse
+import json
 import logging
 
 import torch
@@ -21,6 +22,7 @@ parser.add_argument('--learning_rate', default=1e-3, type=float)
 parser.add_argument('--num_epoch', default=10, type=int)
 parser.add_argument('--device', default='cpu')
 parser.add_argument('--log_file', default='log.txt')
+parser.add_argument('--model_config')
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -42,7 +44,13 @@ if __name__ == "__main__":
     src_vocab_len = len(tokenizer.src_stoi)
     tgt_vocab_len = len(tokenizer.tgt_stoi)
 
-    model = Model(src_vocab_len, tgt_vocab_len)
+    if args.model_config:
+        with open(args.model_config) as f:
+            config = json.load(f)
+    else:
+        config = {}
+
+    model = Model(src_vocab_len, tgt_vocab_len, **config)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     trainner = Trainer(model, optimizer, train_dl, test_dl, device=args.device)
 
