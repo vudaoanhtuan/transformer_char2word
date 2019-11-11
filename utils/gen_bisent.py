@@ -6,7 +6,7 @@ from tqdm import tqdm
 import numpy as np
 import spacy
 
-from tokenizer import SpacyWordSpliter
+from tokenizer import SpacyWordSpliter, NltkTokenizer
 from word_transform import gen_wrong_word
 
 parser = argparse.ArgumentParser()
@@ -15,9 +15,10 @@ parser.add_argument('word_list')
 parser.add_argument('--percent', type=float, default=0.5)
 parser.add_argument('--max_len', type=int, default=100)
 parser.add_argument('-o', '--output', default='bisent.tsv')
+parser.add_argument('--remove_punc', default=False, action='store_true')
 
 
-tokenizer = SpacyWordSpliter()
+
 
 def generate_bisent(sent, word_list, max_len=100, percent=0.5):
     sent = sent.replace('\t', ' ')
@@ -36,6 +37,11 @@ def generate_bisent(sent, word_list, max_len=100, percent=0.5):
 
 if __name__=='__main__':
     args = parser.parse_args()
+
+    if args.remove_punc:
+        tokenizer = NltkTokenizer()
+    else:
+        tokenizer = SpacyWordSpliter()
 
     with open(args.word_list) as f:
         word_list = f.read().split('\n')[:-1]
