@@ -89,11 +89,9 @@ class Dataset(data.Dataset):
     def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=100):
         self.tokenizer = tokenizer
 
-        with open(file_path) as f:
-            corpus = f.read().split('\n')[:-1]
-        corpus = [x.split('\t') for x in corpus]
+        df = pd.read_csv(file_path, sep=\'t', names=['src', 'tgt'])
 
-        tokens = [tokenizer.tokenize(*x) for x in tqdm(corpus)]
+        tokens = [tokenizer.tokenize(x.src, x.tgt) for i, x in tqdm(df.iterrows())]
         self.src = [x[0] for x in tokens]
         self.tgt = [x[1] for x in tokens]
 
