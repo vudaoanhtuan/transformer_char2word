@@ -91,7 +91,7 @@ class Dataset(data.Dataset):
 
         df = pd.read_csv(file_path, sep='\t', names=['src', 'tgt'])
 
-        tokens = [tokenizer.tokenize(x.src, x.tgt) for i, x in tqdm(df.iterrows())]
+        tokens = [tokenizer.tokenize(str(x.src), str(x.tgt)) for i, x in tqdm(df.iterrows())]
         self.src = [x[0] for x in tokens]
         self.tgt = [x[1] for x in tokens]
 
