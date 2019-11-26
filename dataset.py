@@ -57,15 +57,21 @@ class Tokenizer:
             t = t if t else self.special[self.unk]
             tokens.append(t)
         return tokens
-
-    def tokenize(self, src, tgt):
+    
+    def tokenize_src(self, src):
         src = self._char_tokenize(src)
         src = self._token_to_id(src, self.src_stoi)
+        return src
 
+    def tokenize_tgt(self, tgt):
         tgt = self._word_tokenize(tgt)
         tgt = self._token_to_id(tgt, self.tgt_stoi)
         tgt = [self.bos] + tgt + [self.eos]
+        return tgt
 
+    def tokenize(self, src, tgt):
+        src = self.tokenize_src(src)
+        tgt = self.tokenize_tgt(tgt)
         return src, tgt
 
 
