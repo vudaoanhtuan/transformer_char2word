@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     model = Model(src_vocab_len, tgt_vocab_len, **config)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, betas=(0.9, 0.98), eps=1e-9)
-    sched = CosineWithRestarts(optimizer, T_max=len(train_dl))
+    sched = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=len(train_dl))
     trainner = Trainer(model, optimizer, train_dl, test_dl, device=args.device, scheduler=sched)
 
     print("Start training")
