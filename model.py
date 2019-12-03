@@ -53,11 +53,15 @@ class Model(nn.Module):
         self.pos_embedding = PositionalEncoder(d_model, dropout=dropout)
         self.src_embedding = nn.Embedding(src_vocab_len, d_model)
         self.tgt_embedding = nn.Embedding(tgt_vocab_len, d_model)
-        self.transformer = nn.Transformer(
-            d_model=d_model, nhead=nhead, num_encoder_layers=num_encoder_layers,
-            num_decoder_layers=num_decoder_layers, dim_feedforward=dim_feedforward, dropout=dropout,
-            activation=activation
-        )
+
+        encoder_layer = nn.TransformerEncoderLayer(d_model, nhead, dim_feedforward, dropout, activation)
+        encoder_norm = nn.LayerNorm(d_model)
+        self.encoder = nn.TransformerEncoder(encoder_layer, num_encoder_layers, encoder_norm)
+
+        decoder_layer = nn.TransformerDecoderLayer(d_model, nhead, dim_feedforward, dropout, activation)
+        decoder_norm = nn.LayerNorm(d_model)
+        self.decoder = nn.TransformerDecoder(decoder_layer, num_decoder_layers, decoder_norm)
+
         self.linear_out = nn.Linear(d_model, tgt_vocab_len)
 
     def forward(self, src_inp, tgt_inp, tgt_lbl):
@@ -90,15 +94,18 @@ class Model(nn.Module):
         tgt_inp = self.pos_embedding(tgt_inp) # BxTxE
         tgt_inp = tgt_inp.transpose(0,1) # TxBxE
 
-        output = self.transformer(
-            src_inp, tgt_inp, 
-            src_key_padding_mask=src_padding_mask,
+        import pdb; pdb.set_trace();
+        memory = self.encoder(
+            src_inp, 
+            src_key_padding_mask=src_padding_mask
+        )
+        output = self.decoder(
+            tgt_inp, memory,
+            tgt_mask=tgt_mask,
             tgt_key_padding_mask=tgt_padding_mask,
-            memory_key_padding_mask=src_padding_mask,
-            tgt_mask=tgt_mask
-        ) # TxBxE
+            memory_key_padding_mask=src_padding_mask
+        )
 
-        
 
         output = output.transpose(0,1) # BxTxE
         output = self.linear_out(output) # BxTxV
