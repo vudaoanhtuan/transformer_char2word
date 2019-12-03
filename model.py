@@ -64,6 +64,10 @@ class Model(nn.Module):
 
         self.linear_out = nn.Linear(d_model, tgt_vocab_len)
 
+        for p in self.parameters():
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p) 
+
     def forward(self, src_inp, tgt_inp, tgt_lbl):
         # src_inp: BxS
         # tgt_inp: BxT
