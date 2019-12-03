@@ -98,7 +98,6 @@ class Model(nn.Module):
         tgt_inp = self.pos_embedding(tgt_inp) # BxTxE
         tgt_inp = tgt_inp.transpose(0,1) # TxBxE
 
-        import pdb; pdb.set_trace();
         memory = self.encoder(
             src_inp, 
             src_key_padding_mask=src_padding_mask
