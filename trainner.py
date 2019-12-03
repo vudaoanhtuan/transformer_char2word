@@ -42,8 +42,8 @@ class Trainer:
         
         total_loss = 0
         total_item = 0
-        
-        desc = "total_loss=%.4f | batch_loss=%.4f | lr=%.6f"
+
+        desc = "total_loss=%.6f | batch_loss=%.6f | lr=%.6f"
         with tqdm(total=len(dataloader)) as pbar:
             for src, tgt in dataloader:
                 src = src.long()
@@ -53,14 +53,14 @@ class Trainer:
                 tgt_inp = tgt[:, :-1]
                 tgt_lbl = tgt[:, 1:]
                 
+                self.optimizer.zero_grad()
                 _, loss = self.model(src, tgt_inp, tgt_lbl)
 
                 if is_training:
-                    self.optimizer.zero_grad()
                     loss.backward()
                     self.optimizer.step()
                     if self.scheduler is not None:
-                        scheduler.step()
+                        self.scheduler.step()
 
                 total_loss += loss.item()
                 total_item += 1
