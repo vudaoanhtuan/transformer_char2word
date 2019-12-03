@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 from trainner import Trainer
 from model import Model
 from dataset import Dataset, Tokenizer, load_tokenizer
+from scheduler import CosineWithRestarts
 
 
 parser = argparse.ArgumentParser()
@@ -52,7 +53,8 @@ if __name__ == "__main__":
 
     model = Model(src_vocab_len, tgt_vocab_len, **config)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, betas=(0.9, 0.98), eps=1e-9)
-    trainner = Trainer(model, optimizer, train_dl, test_dl, device=args.device)
+    sched = CosineWithRestarts(optimizer, T_max=len(train_dl))
+    trainner = Trainer(model, optimizer, train_dl, test_dl, device=args.device, scheduler=sched)
 
     print("Start training")
     trainner.train(args.num_epoch)
