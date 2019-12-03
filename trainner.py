@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 
+from logger import Logger
+
 def generate_square_subsequent_mask(sz):
     mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
     mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
@@ -16,7 +18,7 @@ def generate_padding_mask(x, padding_value=0):
     return mask
 
 class Trainer:
-    def __init__(self, model, optimizer, train_dl, test_dl, weight_dir='weight', log_file='log.txt', scheduler=None, device='cpu'):
+    def __init__(self, model, optimizer, train_dl, test_dl, weight_dir='weight', log_dir='logs', scheduler=None, device='cpu'):
         self.model = model
         self.optimizer = optimizer
         self.scheduler = scheduler
@@ -27,10 +29,16 @@ class Trainer:
         self.device = torch.device(device)
         self.model.to(self.device)
 
-        self.log_file = log_file
         self.weight_dir = weight_dir
         if not os.path.isdir(weight_dir):
             os.mkdir(weight_dir)
+
+        if os.path.isdir(log_dir):
+            os.rmdir(log_dir)
+
+        self.logger = Logger(log_dir)
+        self.train_step = 0
+        self.val_step = 0
 
 
 
@@ -67,6 +75,18 @@ class Trainer:
 
                 pbar.update(1)
                 pbar.set_description(desc%(total_loss/total_item, loss.item(), self.optimizer.param_groups[0]['lr']))
+
+                if is_training:
+                    info = {"train_loss": loss.item()}
+                    self.train_step += 1
+                    step = self.train_step
+                else:
+                    info = {"val_loss": loss.item()}
+                    self.val_step += 1
+                    step = self.val_step
+
+                for tag, value in info.items():
+                    self.logger.scalar_summary(tag, value, step)
 
         return total_loss/total_item
 
