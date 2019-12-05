@@ -253,9 +253,7 @@ class MaskDataset(data.Dataset):
         tgt_lbl = self.tgt[index][1:]
 
         if self.use_mask:
-            print("src:", src[:10])
             src = self.mask_item(src, self.src_padding_value, self.src_mask_value, self.src_vocab_len)
-            print("src:", src[:10])
             tgt_inp = self.mask_item(tgt_inp, self.tgt_padding_value, self.tgt_mask_value, self.tgt_vocab_len)
 
         return src, tgt_inp, tgt_lbl
