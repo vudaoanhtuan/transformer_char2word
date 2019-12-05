@@ -231,17 +231,20 @@ class MaskDataset(data.Dataset):
     def mask_item(self, x,
         pad_value, mask_value, vocab_len,
         pc_choice=0.15, pc_mask=0.8, pc_other=0.1, pc_keep=0.1):
-        x = x.copy()
-        for i in range(len(x)):
-            if x[i] == pad_value:
-                break
-            if np.random.choice([True, False], p=[pc_choice, 1-pc_choice]):
-                mask_type = np.random.choice([0,1,2], p=[pc_mask, pc_other, pc_keep])
-                if mask_type == 0:
+        n_mask = int(pc_choice*len(x))
+
+        if n_mask > 0:
+            mask_ix = np.random.choice(range(0, len(x)), n_mask)
+            mask_v = np.random.choice([0,1,2], n_mask, p=[pc_mask, pc_other, pc_keep])
+
+            x = x.copy()
+            for i,v in zip(mask_ix, mask_v):
+                if v==0:
                     x[i] = mask_value
-                elif mask_type == 1:
-                    v = np.random.randint(5, vocab_len)
-                    x[i] = v
+                elif v==1:
+                    x[i] = np.random.randint(5, vocab_len)
+            return x
+
         return x
 
     def __len__(self):
