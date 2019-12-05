@@ -34,12 +34,11 @@ class Trainer:
             os.mkdir(weight_dir)
 
         if os.path.isdir(log_dir):
-            os.rmdir(log_dir)
+            import shutil
+            shutil.rmtree(log_dir)
 
         self.logger = Logger(log_dir)
         self.train_step = 0
-        self.val_step = 0
-
 
 
     def run_iterator(self, dataloader, is_training=True):
@@ -80,23 +79,21 @@ class Trainer:
                     info = {"train_loss": loss.item()}
                     self.train_step += 1
                     step = self.train_step
-                else:
-                    info = {"val_loss": loss.item()}
-                    self.val_step += 1
-                    step = self.val_step
-
-                for tag, value in info.items():
-                    self.logger.scalar_summary(tag, value, step)
+                    self.logger.update_step(info, step)
 
         return total_loss/total_item
 
     def train(self, num_epoch=10):
-        for e in range(num_epoch):
-            logging.info("Epoch %d/%d" % (e, num_epoch))
-            print('\n[Epoch %d/%d] ========\n' % (e, num_epoch) ,flush=True, end='')
+        for epoch in range(num_epoch):
+            logging.info("Epoch %d/%d" % (epoch, num_epoch))
+            print('\n[Epoch %d/%d] ========\n' % (epoch, num_epoch) ,flush=True, end='')
             train_loss = self.run_iterator(self.train_dl)
-            logging.info("train_loss = %.6f" % train_loss)
-            test_loss = self.run_iterator(self.test_dl, is_training=False)
-            logging.info("test_loss  = %.6f" % test_loss)
-            torch.save(self.model.state_dict(), os.path.join(self.weight_dir, 'model.%02d.h5'%e))
+            val_loss = self.run_iterator(self.test_dl, is_training=False)
+            torch.save(self.model.state_dict(), os.path.join(self.weight_dir, 'model.%02d.h5'%epoch))
+
+            losses = {
+                "train_loss": train_loss,
+                "val_loss": val_loss
+            }
+            self.logger.update_epoch(losses, epoch)
 
