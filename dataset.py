@@ -184,7 +184,7 @@ def pad_sequences(sequences, maxlen=None, dtype='int32',
 
 
 class Dataset(data.Dataset):
-    def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=100):
+    def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=50):
         self.tokenizer = tokenizer
 
         df = pd.read_csv(file_path, sep='\t', names=['src', 'tgt'])
