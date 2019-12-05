@@ -1,5 +1,4 @@
 import os
-import logging
 
 import torch
 import torch.nn as nn
@@ -85,7 +84,6 @@ class Trainer:
 
     def train(self, num_epoch=10):
         for epoch in range(num_epoch):
-            logging.info("Epoch %d/%d" % (epoch, num_epoch))
             print('\n[Epoch %d/%d] ========\n' % (epoch, num_epoch) ,flush=True, end='')
             train_loss = self.run_iterator(self.train_dl)
             val_loss = self.run_iterator(self.test_dl, is_training=False)

@@ -1,7 +1,6 @@
 import os
 import argparse
 import json
-import logging
 
 import torch
 import torch.nn as nn
@@ -10,8 +9,6 @@ from torch.utils.data import DataLoader
 from trainner import Trainer
 from model import Model
 from dataset import Dataset, Tokenizer, load_tokenizer
-from scheduler import CosineWithRestarts
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--src_vocab', required=True)
@@ -27,10 +24,6 @@ parser.add_argument('--model_config')
 
 if __name__ == "__main__":
     args = parser.parse_args()
-
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
-    logging.basicConfig(filename=args.log_file, level=logging.INFO)
 
     print("Load vocab")
     tokenizer = load_tokenizer(args.src_vocab, args.tgt_vocab)
