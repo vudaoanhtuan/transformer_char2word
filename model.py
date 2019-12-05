@@ -44,8 +44,11 @@ class PositionalEncoder(nn.Module):
         return self.dropout(x)
 
 class Model(nn.Module):
-    def __init__(self, src_vocab_len, tgt_vocab_len, d_model=512, nhead=8, num_encoder_layers=6,
-                 num_decoder_layers=6, dim_feedforward=2048, dropout=0.1, activation="relu"):
+    def __init__(self, src_vocab_len, tgt_vocab_len, 
+        d_model=256, nhead=8, 
+        num_encoder_layers=3, num_decoder_layers=3, 
+        dim_feedforward=1024, 
+        dropout=0.1, activation="relu"):
         super().__init__()
         self.src_padding_value = 0
         self.tgt_padding_value = 0
