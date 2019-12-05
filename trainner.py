@@ -16,6 +16,7 @@ def generate_padding_mask(x, padding_value=0):
     mask = x==padding_value
     return mask
 
+
 class Trainer:
     def __init__(self, model, optimizer, train_dl, test_dl, weight_dir='weight', log_dir='logs', scheduler=None, device='cpu'):
         self.model = model
@@ -52,13 +53,17 @@ class Trainer:
         desc = "total_loss=%.6f | batch_loss=%.6f | lr=%.6f"
         with tqdm(total=len(dataloader)) as pbar:
             for src, tgt in dataloader:
-                src = src.long()
-                tgt = tgt.long()
-                src = src.to(self.device)
-                tgt = tgt.to(self.device)
+                src = src.long().to(self.device)
+                tgt = tgt.long().to(self.device)
                 tgt_inp = tgt[:, :-1]
                 tgt_lbl = tgt[:, 1:]
-                
+
+                # mask input in trainning phrase
+                if is_training:
+                    self.model.mask_src(src)
+                    self.model.mask_tgt(tgt_inp)
+
+
                 self.optimizer.zero_grad()
                 _, loss = self.model(src, tgt_inp, tgt_lbl)
 

@@ -36,8 +36,14 @@ if __name__ == "__main__":
     test_dl = DataLoader(test_ds, shuffle=False, batch_size=args.batch_size)
 
     print("Init model")
-    src_vocab_len = len(tokenizer.src_stoi)
-    tgt_vocab_len = len(tokenizer.tgt_stoi)
+    vocab_config = {
+        'src_vocab_len': len(tokenizer.src_stoi),
+        'tgt_vocab_len': len(tokenizer.tgt_stoi),
+        'src_padding_value': tokenizer.src_stoi['[pad]'],
+        'tgt_padding_value': tokenizer.tgt_stoi['[pad]'],
+        'src_mask_value': tokenizer.src_stoi['[mask]'],
+        'tgt_mask_value': tokenizer.tgt_stoi['[mask]']
+    }
 
     if args.model_config:
         with open(args.model_config) as f:
@@ -45,7 +51,7 @@ if __name__ == "__main__":
     else:
         config = {}
 
-    model = Model(src_vocab_len, tgt_vocab_len, **config)
+    model = Model(vocab_config, **config)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, betas=(0.9, 0.98), eps=1e-9)
     sched = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=len(train_dl))
     trainner = Trainer(

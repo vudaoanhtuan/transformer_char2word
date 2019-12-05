@@ -14,21 +14,23 @@ class Tokenizer:
         disable = ['vectors', 'textcat', 'tagger', 'parser', 'ner']
         self.word_tokenizer = spacy.load('en_core_web_sm', disable=disable)
         self.lower_text = lower_text
-        self.special = ['<pad>', '<unk>', '<bos>', '<eos>']
+        self.special = ['[pad]', '[unk]', '[bos]', '[eos]', '[mask]']
         src_vocab = self.special + src_vocab
         tgt_vocab = self.special + tgt_vocab
         self.pad = 0
         self.unk = 1
         self.bos = 2
         self.eos = 3
+        self.mask = 4
         self.src_itos = {i:s for i,s in enumerate(src_vocab)}
         self.tgt_itos = {i:s for i,s in enumerate(tgt_vocab)}
         self.src_stoi = {s:i for i,s in enumerate(src_vocab)}
         self.tgt_stoi = {s:i for i,s in enumerate(tgt_vocab)}
-        assert self.src_stoi['<pad>'] == self.tgt_stoi['<pad>'] == self.pad
-        assert self.src_stoi['<unk>'] == self.tgt_stoi['<unk>'] == self.unk
-        assert self.src_stoi['<bos>'] == self.tgt_stoi['<bos>'] == self.bos
-        assert self.src_stoi['<eos>'] == self.tgt_stoi['<eos>'] == self.eos
+        assert self.src_stoi['[pad]'] == self.tgt_stoi['[pad]'] == self.pad
+        assert self.src_stoi['[unk]'] == self.tgt_stoi['[unk]'] == self.unk
+        assert self.src_stoi['[bos]'] == self.tgt_stoi['[bos]'] == self.bos
+        assert self.src_stoi['[eos]'] == self.tgt_stoi['[eos]'] == self.eos
+        assert self.src_stoi['[mask]'] == self.tgt_stoi['[mask]'] == self.mask
         
 
     def _char_tokenize(self, sent):

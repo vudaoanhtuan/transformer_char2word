@@ -44,18 +44,23 @@ class PositionalEncoder(nn.Module):
         return self.dropout(x)
 
 class Model(nn.Module):
-    def __init__(self, src_vocab_len, tgt_vocab_len, 
+    def __init__(self, vocab_config,
         d_model=256, nhead=8, 
         num_encoder_layers=3, num_decoder_layers=3, 
         dim_feedforward=1024, 
         dropout=0.1, activation="relu"):
         super().__init__()
-        self.src_padding_value = 0
-        self.tgt_padding_value = 0
+
+        self.src_padding_value = vocab_config['src_padding_value']
+        self.tgt_padding_value = vocab_config['tgt_padding_value']
+        self.src_mask_value = vocab_config['src_mask_value']
+        self.tgt_mask_value = vocab_config['tgt_mask_value']
+        self.src_vocab_len = vocab_config['src_vocab_len']
+        self.tgt_vocab_len = vocab_config['tgt_vocab_len']
 
         self.pos_embedding = PositionalEncoder(d_model, dropout=dropout)
-        self.src_embedding = nn.Embedding(src_vocab_len, d_model)
-        self.tgt_embedding = nn.Embedding(tgt_vocab_len, d_model)
+        self.src_embedding = nn.Embedding(self.src_vocab_len, d_model)
+        self.tgt_embedding = nn.Embedding(self.tgt_vocab_len, d_model)
 
         encoder_layer = nn.TransformerEncoderLayer(d_model, nhead, dim_feedforward, dropout, activation)
         encoder_norm = nn.LayerNorm(d_model)
@@ -65,7 +70,7 @@ class Model(nn.Module):
         decoder_norm = nn.LayerNorm(d_model)
         self.decoder = nn.TransformerDecoder(decoder_layer, num_decoder_layers, decoder_norm)
 
-        self.linear_out = nn.Linear(d_model, tgt_vocab_len)
+        self.linear_out = nn.Linear(d_model, self.tgt_vocab_len)
 
         for p in self.parameters():
             if p.dim() > 1:
@@ -124,4 +129,26 @@ class Model(nn.Module):
         )
 
         return output, loss
+
+    def mask_tensor(self, x, 
+        pad_value, mask_value, vocab_len,
+        pc_choice=0.15, pc_mask=0.8, pc_other=0.1, pc_keep=0.1):
+        batch_size, max_seq_len = x.shape
+        for i in range(batch_size):
+            for j in range(max_seq_len):
+                if x[i][j] == pad_value:
+                    break
+                if np.random.choice([True, False], p=[pc_choice, 1-pc_choice]):
+                    mask_type = np.random.choice([0,1,2], p=[pc_mask, pc_other, pc_keep])
+                    if mask_type == 0:
+                        x[i][j] = mask_value
+                    elif mask_type == 1:
+                        v = np.random.randint(5, vocab_len)
+                        x[i][j] = v
+
+    def mask_src(self, x):
+        self.mask_tensor(x, self.src_padding_value, self.src_mask_value, self.src_vocab_len)
+    
+    def mask_tgt(self, x):
+        self.mask_tensor(x, self.tgt_padding_value, self.tgt_mask_value, self.tgt_vocab_len)
 
