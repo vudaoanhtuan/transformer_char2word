@@ -14,21 +14,23 @@ class Tokenizer:
         disable = ['vectors', 'textcat', 'tagger', 'parser', 'ner']
         self.word_tokenizer = spacy.load('en_core_web_sm', disable=disable)
         self.lower_text = lower_text
-        self.special = ['<pad>', '<unk>', '<bos>', '<eos>']
+        self.special = ['[pad]', '[unk]', '[bos]', '[eos]', '[mask]']
         src_vocab = self.special + src_vocab
         tgt_vocab = self.special + tgt_vocab
         self.pad = 0
         self.unk = 1
         self.bos = 2
         self.eos = 3
+        self.mask = 4
         self.src_itos = {i:s for i,s in enumerate(src_vocab)}
         self.tgt_itos = {i:s for i,s in enumerate(tgt_vocab)}
         self.src_stoi = {s:i for i,s in enumerate(src_vocab)}
         self.tgt_stoi = {s:i for i,s in enumerate(tgt_vocab)}
-        assert self.src_stoi['<pad>'] == self.tgt_stoi['<pad>'] == self.pad
-        assert self.src_stoi['<unk>'] == self.tgt_stoi['<unk>'] == self.unk
-        assert self.src_stoi['<bos>'] == self.tgt_stoi['<bos>'] == self.bos
-        assert self.src_stoi['<eos>'] == self.tgt_stoi['<eos>'] == self.eos
+        assert self.src_stoi['[pad]'] == self.tgt_stoi['[pad]'] == self.pad
+        assert self.src_stoi['[unk]'] == self.tgt_stoi['[unk]'] == self.unk
+        assert self.src_stoi['[bos]'] == self.tgt_stoi['[bos]'] == self.bos
+        assert self.src_stoi['[eos]'] == self.tgt_stoi['[eos]'] == self.eos
+        assert self.src_stoi['[mask]'] == self.tgt_stoi['[mask]'] == self.mask
         
 
     def _char_tokenize(self, sent):
@@ -202,4 +204,59 @@ class Dataset(data.Dataset):
         src = self.src[index]
         tgt = self.tgt[index]
         return src, tgt
+
+class MaskDataset(data.Dataset):
+    def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=50, use_mask=True):
+        self.tokenizer = tokenizer
+        self.use_mask = use_mask
+
+        df = pd.read_csv(file_path, sep='\t', names=['src', 'tgt'])
+
+        tokens = [tokenizer.tokenize(str(x.src), str(x.tgt)) for i, x in tqdm(df.iterrows())]
+        self.src = [x[0] for x in tokens]
+        self.tgt = [x[1] for x in tokens]
+
+        self.src = pad_sequences(self.src, maxlen=src_pad_len, value=tokenizer.pad, padding='post')
+        self.tgt = pad_sequences(self.tgt, maxlen=tgt_pad_len, value=tokenizer.pad, padding='post')
+
+        self.src_padding_value = self.tokenizer.src_stoi['[pad]']
+        self.tgt_padding_value = self.tokenizer.tgt_stoi['[pad]']
+
+        self.src_mask_value = self.tokenizer.src_stoi['[mask]']
+        self.tgt_mask_value = self.tokenizer.tgt_stoi['[mask]']
+
+        self.src_vocab_len = len(self.tokenizer.src_stoi)
+        self.tgt_vocab_len = len(self.tokenizer.tgt_stoi)
+
+    def mask_item(self, x,
+        pad_value, mask_value, vocab_len,
+        pc_choice=0.15, pc_mask=0.8, pc_other=0.1, pc_keep=0.1):
+        x = x.copy()
+        for i in range(len(x)):
+            if x[i] == pad_value:
+                break
+            if np.random.choice([True, False], p=[pc_choice, 1-pc_choice]):
+                mask_type = np.random.choice([0,1,2], p=[pc_mask, pc_other, pc_keep])
+                if mask_type == 0:
+                    x[i] = mask_value
+                elif mask_type == 1:
+                    v = np.random.randint(5, vocab_len)
+                    x[i] = v
+        return x
+
+    def __len__(self):
+        return len(self.src)
+
+    def __getitem__(self, index):
+        src = self.src[index]
+        tgt_inp = self.tgt[index][:-1]
+        tgt_lbl = self.tgt[index][1:]
+
+        if self.use_mask:
+            print("src:", src[:10])
+            src = self.mask_item(src, self.src_padding_value, self.src_mask_value, self.src_vocab_len)
+            print("src:", src[:10])
+            tgt_inp = self.mask_item(tgt_inp, self.tgt_padding_value, self.tgt_mask_value, self.tgt_vocab_len)
+
+        return src, tgt_inp, tgt_lbl
 

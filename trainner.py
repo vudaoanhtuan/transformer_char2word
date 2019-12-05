@@ -51,13 +51,10 @@ class Trainer:
 
         desc = "total_loss=%.6f | batch_loss=%.6f | lr=%.6f"
         with tqdm(total=len(dataloader)) as pbar:
-            for src, tgt in dataloader:
-                src = src.long()
-                tgt = tgt.long()
-                src = src.to(self.device)
-                tgt = tgt.to(self.device)
-                tgt_inp = tgt[:, :-1]
-                tgt_lbl = tgt[:, 1:]
+            for src, tgt_inp, tgt_lbl in dataloader:
+                src = src.long().to(self.device)
+                tgt_inp = tgt_inp.long().to(self.device)
+                tgt_lbl = tgt_lbl.long().to(self.device)
                 
                 self.optimizer.zero_grad()
                 _, loss = self.model(src, tgt_inp, tgt_lbl)
