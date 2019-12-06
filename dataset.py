@@ -209,6 +209,8 @@ class MaskDataset(data.Dataset):
     def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=50, use_mask=True):
         self.tokenizer = tokenizer
         self.use_mask = use_mask
+        self.src_pad_len = src_pad_len
+        self.tgt_pad_len = tgt_pad_len
 
         df = pd.read_csv(file_path, sep='\t', names=['src', 'tgt'])
 
@@ -216,14 +218,8 @@ class MaskDataset(data.Dataset):
         self.src = [x[0] for x in tokens]
         self.tgt = [x[1] for x in tokens]
 
-        self.src = pad_sequences(self.src, maxlen=src_pad_len, value=tokenizer.pad, padding='post')
-        self.tgt = pad_sequences(self.tgt, maxlen=tgt_pad_len, value=tokenizer.pad, padding='post')
-
-        self.src_padding_value = self.tokenizer.src_stoi['[pad]']
-        self.tgt_padding_value = self.tokenizer.tgt_stoi['[pad]']
-
-        self.src_mask_value = self.tokenizer.src_stoi['[mask]']
-        self.tgt_mask_value = self.tokenizer.tgt_stoi['[mask]']
+        self.pad_value = self.tokenizer.pad
+        self.mask_value = self.tokenizer.mask
 
         self.src_vocab_len = len(self.tokenizer.src_stoi)
         self.tgt_vocab_len = len(self.tokenizer.tgt_stoi)
@@ -256,8 +252,12 @@ class MaskDataset(data.Dataset):
         tgt_lbl = self.tgt[index][1:]
 
         if self.use_mask:
-            src = self.mask_item(src, self.src_padding_value, self.src_mask_value, self.src_vocab_len)
-            tgt_inp = self.mask_item(tgt_inp, self.tgt_padding_value, self.tgt_mask_value, self.tgt_vocab_len)
+            src = self.mask_item(src, self.pad_value, self.mask_value, self.src_vocab_len)
+            tgt_inp = self.mask_item(tgt_inp, self.pad_value, self.mask_value, self.tgt_vocab_len)
+
+        src = pad_sequences([src], maxlen=self.src_pad_len, value=self.tokenizer.pad, padding='post')[0]
+        tgt_inp = pad_sequences([tgt_inp], maxlen=self.tgt_pad_len, value=self.tokenizer.pad, padding='post')[0]
+        tgt_lbl = pad_sequences([tgt_lbl], maxlen=self.tgt_pad_len, value=self.tokenizer.pad, padding='post')[0]
 
         return src, tgt_inp, tgt_lbl
 
