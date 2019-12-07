@@ -203,7 +203,9 @@ class Dataset(data.Dataset):
     def __getitem__(self, index):
         src = self.src[index]
         tgt = self.tgt[index]
-        return src, tgt
+        tgt_inp = tgt[:-1]
+        tgt_lbl = tgt[1:]
+        return src, tgt_inp, tgt_lbl
 
 class MaskDataset(data.Dataset):
     def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=50, use_mask=True):
