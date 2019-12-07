@@ -69,7 +69,48 @@ class Model(nn.Module):
 
         for p in self.parameters():
             if p.dim() > 1:
-                nn.init.xavier_uniform_(p) 
+                nn.init.xavier_uniform_(p)
+
+
+    def encode(self, src_inp, src_padding_mask=None):
+        # src_inp: BxS
+        # src_padding_mask: BxS
+
+        src_inp = self.src_embedding(src_inp)
+        src_inp = self.pos_embedding(src_inp) # BxSxE
+        src_inp = src_inp.transpose(0,1) # SxBxE
+
+        memory = self.encoder(
+            src_inp, 
+            src_key_padding_mask=src_padding_mask
+        ) # SxBxd_model
+
+        return memory
+
+
+    def decode(self, tgt_inp, memory, src_padding_mask=None, tgt_padding_mask=None, tgt_mask=None):
+        # memory: SxBxd_model
+        # tgt_inp: BxT
+        # src_padding_mask: BxS
+        # tgt_padding_mask: BxT
+        # tgt_mask: TxT
+
+        tgt_inp = self.tgt_embedding(tgt_inp)
+        tgt_inp = self.pos_embedding(tgt_inp) # BxTxE
+        tgt_inp = tgt_inp.transpose(0,1) # TxBxE
+
+        output = self.decoder(
+            tgt_inp, memory,
+            tgt_mask=tgt_mask,
+            tgt_key_padding_mask=tgt_padding_mask,
+            memory_key_padding_mask=src_padding_mask
+        ) # TxBxE
+
+        output = output.transpose(0,1) # BxTxE
+        output = self.linear_out(output) # BxTxV
+
+        return output
+
 
     def forward(self, src_inp, tgt_inp, tgt_lbl):
         # src_inp: BxS
@@ -93,29 +134,13 @@ class Model(nn.Module):
             tgt_padding_mask = tgt_padding_mask.cuda()
             tgt_mask = tgt_mask.cuda()
 
-        src_inp = self.src_embedding(src_inp)
-        src_inp = self.pos_embedding(src_inp) # BxSxE
-        src_inp = src_inp.transpose(0,1) # SxBxE
-
-        tgt_inp = self.tgt_embedding(tgt_inp)
-        tgt_inp = self.pos_embedding(tgt_inp) # BxTxE
-        tgt_inp = tgt_inp.transpose(0,1) # TxBxE
-
-        memory = self.encoder(
-            src_inp, 
-            src_key_padding_mask=src_padding_mask
+        memory = self.encode(src_inp, src_padding_mask=src_padding_mask)
+        output = self.decode(
+            tgt_inp, memory, 
+            src_padding_mask=src_padding_mask,
+            tgt_padding_mask=tgt_padding_mask,
+            tgt_mask=tgt_mask
         )
-        output = self.decoder(
-            tgt_inp, memory,
-            tgt_mask=tgt_mask,
-            tgt_key_padding_mask=tgt_padding_mask,
-            memory_key_padding_mask=src_padding_mask
-        )
-
-
-        output = output.transpose(0,1) # BxTxE
-        output = self.linear_out(output) # BxTxV
-
 
         loss = F.cross_entropy(
             output.reshape(-1, output.shape[-1]), 
