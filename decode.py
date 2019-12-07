@@ -2,7 +2,7 @@ import torch
 
 from model import generate_square_subsequent_mask
 
-def greedy_decode(model, tokenizer, inp, max_len=50):
+def greedy_decode(model, tokenizer, inp, max_len=100):
     model.eval()
     src = tokenizer.tokenize_src(inp)
     src = torch.tensor([src]).long()
@@ -21,5 +21,5 @@ def greedy_decode(model, tokenizer, inp, max_len=50):
         hyp[0,i] = w_ix
     
     seq = hyp.numpy().tolist()[0]
-    sent = [tokenizer.tgt_itos[x] for x in seq[1:]]
+    sent = [tokenizer.tgt_itos[x] for x in seq[1:i]]
     return ' '.join(sent)
