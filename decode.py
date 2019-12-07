@@ -1,3 +1,5 @@
+import torch
+
 from model import generate_square_subsequent_mask
 
 def greedy_decode(model, tokenizer, inp, max_len=50):
