@@ -92,3 +92,46 @@ class Trainer:
             }
             self.logger.update_epoch(losses, epoch)
 
+
+
+class MaskTrainer(Trainer):
+    def run_iterator(self, dataloader, is_training=True):
+        if is_training:
+            self.model.train()
+        else:
+            self.model.eval()
+        
+        total_loss = 0
+        total_item = 0
+
+        desc = "total_loss=%.6f | batch_loss=%.6f | lr=%.6f"
+        with tqdm(total=len(dataloader)) as pbar:
+            for src, src_mask, tgt_inp, tgt_lbl, tgt_mask in dataloader:
+                src = src.long().to(self.device)
+                src_mask = src_mask.long().to(self.device)
+                tgt_inp = tgt_inp.long().to(self.device)
+                tgt_lbl = tgt_lbl.long().to(self.device)
+                tgt_mask = tgt_mask.long().to(self.device)
+                
+                self.optimizer.zero_grad()
+                _, loss = self.model(src, tgt_inp, tgt_lbl)
+
+                if is_training:
+                    loss.backward()
+                    self.optimizer.step()
+                    if self.scheduler is not None:
+                        self.scheduler.step()
+
+                total_loss += loss.item()
+                total_item += 1
+
+                pbar.update(1)
+                pbar.set_description(desc%(total_loss/total_item, loss.item(), self.optimizer.param_groups[0]['lr']))
+
+                if is_training:
+                    info = {"train_loss": loss.item()}
+                    self.train_step += 1
+                    step = self.train_step
+                    self.logger.update_step(info, step)
+
+        return total_loss/total_item

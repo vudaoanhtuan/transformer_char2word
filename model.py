@@ -150,3 +150,40 @@ class Model(nn.Module):
 
         return output, loss
 
+
+class MaskModel(Model):
+    def forward(self, src_inp, tgt_inp, tgt_lbl, mask=None):
+        # src_inp: BxS
+        # tgt_inp: BxT
+        # tgt_lbl: BxT
+
+        # src padding mask: prevent attention weight from padding word
+        src_padding_mask = generate_padding_mask(src_inp, self.src_padding_value) # BxS
+
+        # tgt padding mask: prevent attention weight from padding word
+        tgt_padding_mask = generate_padding_mask(tgt_inp, self.tgt_padding_value) # BxT
+
+        if src_inp.is_cuda:
+            src_padding_mask = src_padding_mask.cuda()
+            tgt_padding_mask = tgt_padding_mask.cuda()
+
+        memory = self.encode(src_inp, src_padding_mask=src_padding_mask)
+        output = self.decode(
+            tgt_inp, memory, 
+            src_padding_mask=src_padding_mask,
+            tgt_padding_mask=tgt_padding_mask,
+        ) # BxTxV
+
+        l_output = output
+        l_label = tgt_lbl
+        if mask is not None:
+            l_output = output[mask>0]
+            l_label = tgt_lbl[mask>0]
+
+        loss = F.cross_entropy(
+            l_output.reshape(-1, l_output.shape[-1]), 
+            tgt_lbl.reshape(-1), 
+            ignore_index=self.tgt_padding_value
+        )
+
+        return output, loss

@@ -263,3 +263,57 @@ class MaskDataset(data.Dataset):
 
         return src, tgt_inp, tgt_lbl
 
+
+class NewMaskDataset(data.Dataset):
+    def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=50):
+        self.tokenizer = tokenizer
+        self.src_pad_len = src_pad_len
+        self.tgt_pad_len = tgt_pad_len
+
+        with open(file_path) as f:
+            sent = f.read().split("\n")[:-1]
+
+        tokens = [tokenizer.tokenize(str(x), str(x)) for x in tqdm(sent)]
+        self.src = [x[0] for x in tokens]
+        self.tgt = [x[1] for x in tokens]
+
+        self.pad_value = self.tokenizer.pad
+        self.mask_value = self.tokenizer.mask
+
+        self.src_vocab_len = len(self.tokenizer.src_stoi)
+        self.tgt_vocab_len = len(self.tokenizer.tgt_stoi)
+
+
+    def mask_item(self, x,
+        pad_value, mask_value, vocab_len,
+        pc_mask = 0.2, pc_rep_mask = 0.8, pc_rep_other = 0.1, pc_rep_same = 0.1):
+        mask = np.random.choice([0,1,2,3], len(x), 
+            p=[1-pc_mask, pc_mask*pc_rep_mask, pc_mask*pc_rep_other, pc_mask*pc_rep_same])
+        x = np.where(mask==1, mask_value, x)
+        x = np.where(mask==2, np.random.randint(5, vocab_len), x)
+        return x, mask
+
+    def __len__(self):
+        return len(self.src)
+
+    def __getitem__(self, index):
+        src = self.src[index]
+        tgt_inp = self.tgt[index]
+        tgt_lbl = self.tgt[index]
+
+        src, src_mask = self.mask_item(src, self.pad_value, self.mask_value, self.src_vocab_len)
+        tgt_inp, tgt_mask = self.mask_item(tgt_inp, self.pad_value, self.mask_value, self.tgt_vocab_len)
+
+        pad_src = pad_sequences([src, src_mask], maxlen=self.src_pad_len, value=self.tokenizer.pad, padding='post')
+        pad_tgt = pad_sequences([tgt_inp, tgt_lbl, tgt_mask], maxlen=self.tgt_pad_len, value=self.tokenizer.pad, padding='post')
+
+        src = pad_src[0]
+        src_mask = pad_src[1]
+
+        tgt_inp = pad_tgt[0]
+        tgt_lbl = pad_tgt[1]
+        tgt_mask = pad_tgt[2]
+
+        return src, src_mask, tgt_inp, tgt_lbl, tgt_mask
+
+
