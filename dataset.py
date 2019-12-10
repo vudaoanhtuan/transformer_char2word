@@ -301,8 +301,10 @@ class NewMaskDataset(data.Dataset):
         tgt_inp = self.tgt[index]
         tgt_lbl = self.tgt[index]
 
-        src, src_mask = self.mask_item(src, self.pad_value, self.mask_value, self.src_vocab_len)
-        tgt_inp, tgt_mask = self.mask_item(tgt_inp, self.pad_value, self.mask_value, self.tgt_vocab_len)
+        src, src_mask = self.mask_item(src, self.pad_value, self.mask_value, self.src_vocab_len,
+            pc_mask = 0.3, pc_rep_mask = 0.5, pc_rep_other = 0.5, pc_rep_same = 0.0)
+        tgt_inp, tgt_mask = self.mask_item(tgt_inp, self.pad_value, self.mask_value, self.tgt_vocab_len,
+            pc_mask = 0.3, pc_rep_mask = 0.7, pc_rep_other = 0.2, pc_rep_same = 0.1)
 
         pad_src = pad_sequences([src, src_mask], maxlen=self.src_pad_len, value=self.tokenizer.pad, padding='post')
         pad_tgt = pad_sequences([tgt_inp, tgt_lbl, tgt_mask], maxlen=self.tgt_pad_len, value=self.tokenizer.pad, padding='post')
