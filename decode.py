@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 from model import generate_square_subsequent_mask
@@ -30,6 +31,7 @@ def greedy_decode_mask(model, tokenizer, inp):
     src = tokenizer.tokenize_src(inp)
     src = torch.tensor([src]).long()
     tgt_inp = tokenizer.tokenize_tgt(inp)
+    tgt_inp = np.where(tgt_inp==tokenizer.unk, tokenizer.mask, tgt_inp)
     tgt_inp = torch.tensor([tgt_inp]).long()
 
     memory = model.encode(src)

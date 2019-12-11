@@ -346,7 +346,7 @@ class NewMaskDatasetFT(NewMaskDataset):
         tgt_inp = self.tgt[index]
         tgt_lbl = self.tgt[index]
 
-        src = np.where(src==self.tokenizer.unk, self.tokenizer.mask, src)
+        tgt_inp = np.where(tgt_inp==self.tokenizer.unk, self.tokenizer.mask, tgt_inp)
 
         src = pad_sequences([src], maxlen=self.src_pad_len, value=self.tokenizer.pad, padding='post')[0]
         tgt_inp = pad_sequences([tgt_inp], maxlen=self.tgt_pad_len, value=self.tokenizer.pad, padding='post')[0]
