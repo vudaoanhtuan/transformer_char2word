@@ -319,3 +319,37 @@ class NewMaskDataset(data.Dataset):
         return src, src_mask, tgt_inp, tgt_lbl, tgt_mask
 
 
+class NewMaskDatasetFT(NewMaskDataset):
+    def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=50):
+        self.tokenizer = tokenizer
+
+        self.src_pad_len = src_pad_len
+        self.tgt_pad_len = tgt_pad_len
+
+        df = pd.read_csv(file_path, sep='\t', names=['src', 'tgt'])
+
+        tokens = [tokenizer.tokenize(str(x.src), str(x.tgt)) for i, x in tqdm(df.iterrows())]
+        self.src = [x[0] for x in tokens]
+        self.tgt = [x[1] for x in tokens]
+
+        self.pad_value = self.tokenizer.pad
+        self.mask_value = self.tokenizer.mask
+
+        self.src_vocab_len = len(self.tokenizer.src_stoi)
+        self.tgt_vocab_len = len(self.tokenizer.tgt_stoi)
+
+    def __len__(self):
+        return len(self.src)
+
+    def __getitem__(self, index):
+        src = self.src[index]
+        tgt_inp = self.tgt[index]
+        tgt_lbl = self.tgt[index]
+
+        src = np.where(src==self.tokenizer.unk, self.tokenizer.mask, src)
+
+        src = pad_sequences([src], maxlen=self.src_pad_len, value=self.tokenizer.pad, padding='post')[0]
+        tgt_inp = pad_sequences([tgt_inp], maxlen=self.tgt_pad_len, value=self.tokenizer.pad, padding='post')[0]
+        tgt_lbl = pad_sequences([tgt_lbl], maxlen=self.tgt_pad_len, value=self.tokenizer.pad, padding='post')[0]
+
+        return src, tgt_inp, tgt_lbl
