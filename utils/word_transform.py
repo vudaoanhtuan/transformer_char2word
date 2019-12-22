@@ -39,8 +39,10 @@ def transform_sentence(sent, p_transform=0.4, p_del=0.1, p_sub=0.9, p_tf_word={'
             words[i] = ''
         elif t==2:
             n_iter = np.random.randint(1,3)
-            for _ in range(n_iter):
-                func = np.random.choice([delete_char, substitute_char], p=[p_tf_word['del'], p_tf_word['sub']])
+            funcs = np.random.choice([delete_char, substitute_char], n_iter, p=[p_tf_word['del'], p_tf_word['sub']])
+            for func in funcs:
+                if len(words[i]) < 2:
+                    break
                 words[i] = func(words[i])
     words = [w for w in words if w!='']
     return ' '.join(words)
