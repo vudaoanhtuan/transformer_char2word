@@ -14,12 +14,28 @@ data/
 
 # test
 test/
+eval/
 
 # notebook
 nb/
 
 # weight
 weight/
+weight_finetune/
+trained/
+
+# log
+log/
+logs/
+logs_finetune/
+log.txt
+review_log/
+
+# Other file
+note.txt
+train.sh
+test.sh
+.DS_Store
 
 # ipython notebook checkpoin
 .ipynb_checkpoints
