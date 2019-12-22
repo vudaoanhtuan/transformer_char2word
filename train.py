@@ -8,7 +8,8 @@ from torch.utils.data import DataLoader
 
 from trainner import Trainer
 from model import Model
-from dataset import Dataset, Tokenizer, load_tokenizer, MaskDataset
+from dataset import Dataset, MaskDataset
+from tokenizer import Tokenizer, load_tokenizer
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--src_vocab', required=True)
