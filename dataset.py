@@ -61,7 +61,7 @@ class MaskDataset(data.Dataset):
         del self.src
         self.src = []
         for sent in tqdm(self.corpus):
-            sent = transform_sentence(sent)
+            sent = transform_sentence(sent, word_list=self.tokenizer.tgt_itos)
             tokens = self.tokenizer.tokenize_src(sent)
             self.src.append(tokens)
 
