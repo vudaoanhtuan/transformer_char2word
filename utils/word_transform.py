@@ -31,15 +31,25 @@ def substitute_char(word, num_char=1):
     return word
 
 
-def transform_sentence(sent, p_transform=0.4, p_del=0.1, p_sub=0.9, p_tf_word={'del':0.5, 'sub':0.5}):
+def transform_sentence(sent, p_transform=0.4, p_del=0.1, p_ins=0.1, p_sub=0.8, 
+    p_transform_word={'del':0.5, 'sub':0.5},
+    word_list=None):
     words = sent.split()
-    tf_type = np.random.choice([0,1,2], len(words), p=[1-p_transform, p_transform*p_del, p_transform*p_sub])
+    tf_type = np.random.choice([0,1,2,3], len(words), 
+        p=[1-p_transform, p_transform*p_del, p_transform*p_ins, p_transform*p_sub])
     for i,t in enumerate(tf_type):
         if t==1:
             words[i] = ''
         elif t==2:
+            iw = '[unk]'
+            if word_list:
+                ix = np.random.randint(len(word_list))
+                iw = word_list[ix]
+            words[i] = iw + ' ' + words[i]
+        elif t==3:
             n_iter = np.random.randint(1,3)
-            funcs = np.random.choice([delete_char, substitute_char], n_iter, p=[p_tf_word['del'], p_tf_word['sub']])
+            funcs = np.random.choice([delete_char, substitute_char], n_iter, 
+                p=[p_transform_word['del'], p_transform_word['sub']])
             for func in funcs:
                 if len(words[i]) < 2:
                     break
