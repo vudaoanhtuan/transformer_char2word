@@ -15,6 +15,7 @@ data/
 # test
 test/
 eval/
+*test*
 
 # notebook
 nb/
