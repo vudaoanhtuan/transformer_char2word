@@ -1,3 +1,4 @@
+from multiprocessing import Pool
 import numpy as np
 import torch
 import torch.nn as nn
@@ -35,15 +36,16 @@ class Dataset(data.Dataset):
         return src, tgt_inp, tgt_lbl
 
 class MaskDataset(data.Dataset):
-    def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=50, use_mask=True):
+    def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=50, use_mask=True, num_worker=4):
         self.tokenizer = tokenizer
         self.use_mask = use_mask
+        self.num_worker = num_worker
 
         with open(file_path) as f:
             self.corpus = f.read().split('\n')[:-1]
 
         self.src = None
-        self.tgt = [tokenizer.tokenize_tgt(x) for x in tqdm(self.corpus)]
+        self.tgt = [self.tokenizer.tokenize_tgt(x) for x in tqdm(self.corpus)]
 
         self.src_vocab_len = len(self.tokenizer.src_stoi)
         self.tgt_vocab_len = len(self.tokenizer.tgt_stoi)
@@ -59,13 +61,10 @@ class MaskDataset(data.Dataset):
 
     def regenerate_source(self):
         del self.src
-        self.src = []
-        for sent in tqdm(self.corpus):
-            new_sent = transform_sentence(sent, word_list=self.tokenizer.tgt_itos)
-            if len(new_sent) < 10:
-                new_sent = sent
-            tokens = self.tokenizer.tokenize_src(new_sent)
-            self.src.append(tokens)
+        with Pool(self.num_worker) as p:
+            self.src = list(tqdm(p.imap(transform_sentence, self.corpus), total=len(self.corpus)))
+        self.src = [self.tokenizer.tokenize_src(x) for x in tqdm(self.src)]
+
 
     def __len__(self):
         return len(self.corpus)

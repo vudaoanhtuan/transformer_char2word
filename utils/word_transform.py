@@ -1,9 +1,15 @@
 import numpy as np
 import visen
+import os
 
 CHAR_LIST = "abcdefghijklmnopqrstuvwxyzàáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ"
 VOWEL_LIST = list("aeiouàáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ")
 CONSONANT_LIST = list("bcdfghjklmnpqrstvwxyz")
+
+path = os.path.abspath(__file__)
+dir_path = os.path.dirname(path)
+with open(os.path.join(dir_path, "vocab.txt")) as f:
+    WORD_LIST = f.read().split('\n')[:-1]
 
 def delete_char(word, num_char=1):
     word = [c for c in word]
@@ -32,8 +38,7 @@ def substitute_char(word, num_char=1):
 
 
 def transform_sentence(sent, p_transform=0.4, p_del=0.1, p_ins=0.1, p_sub=0.8, 
-    p_transform_word={'del':0.5, 'sub':0.5},
-    word_list=None):
+    p_transform_word={'del':0.5, 'sub':0.5}):
     words = sent.split()
     tf_type = np.random.choice([0,1,2,3], len(words), 
         p=[1-p_transform, p_transform*p_del, p_transform*p_ins, p_transform*p_sub])
@@ -41,10 +46,8 @@ def transform_sentence(sent, p_transform=0.4, p_del=0.1, p_ins=0.1, p_sub=0.8,
         if t==1:
             words[i] = ''
         elif t==2:
-            iw = '[unk]'
-            if word_list:
-                ix = np.random.randint(len(word_list))
-                iw = word_list[ix]
+            ix = np.random.randint(len(WORD_LIST))
+            iw = WORD_LIST[ix]
             words[i] = iw + ' ' + words[i]
         elif t==3:
             n_iter = np.random.randint(1,3)
@@ -55,5 +58,7 @@ def transform_sentence(sent, p_transform=0.4, p_del=0.1, p_ins=0.1, p_sub=0.8,
                     break
                 words[i] = func(words[i])
     words = [w for w in words if w!='']
+    if len(words) < 3:
+        return sent
     return ' '.join(words)
 
