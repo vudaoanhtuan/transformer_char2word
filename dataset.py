@@ -55,15 +55,16 @@ class MaskDataset(data.Dataset):
     def random_mask_tgt(self, x, pc_mask=0.3):
         mask = np.random.choice([0,1], len(x), p=[1-pc_mask, pc_mask])
         x = np.where(mask==1, self.tokenizer.mask, x)
-        x[0] = self.tokenizer.bos
         return x
 
     def regenerate_source(self):
         del self.src
         self.src = []
         for sent in tqdm(self.corpus):
-            sent = transform_sentence(sent, word_list=self.tokenizer.tgt_itos)
-            tokens = self.tokenizer.tokenize_src(sent)
+            new_sent = transform_sentence(sent, word_list=self.tokenizer.tgt_itos)
+            if len(new_sent) < 10:
+                new_sent = sent
+            tokens = self.tokenizer.tokenize_src(new_sent)
             self.src.append(tokens)
 
     def __len__(self):
