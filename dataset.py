@@ -1,8 +1,9 @@
+from multiprocessing import Pool, cpu_count
+
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils import data
-
 import pandas as pd
 from tqdm import tqdm
 
@@ -38,6 +39,7 @@ class MaskDataset(data.Dataset):
     def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=50, use_mask=True):
         self.tokenizer = tokenizer
         self.use_mask = use_mask
+        self.num_worker = cpu_count()
 
         with open(file_path) as f:
             self.corpus = f.read().split('\n')[:-1]
@@ -59,13 +61,10 @@ class MaskDataset(data.Dataset):
 
     def regenerate_source(self):
         del self.src
-        self.src = []
-        for sent in tqdm(self.corpus):
-            new_sent = transform_sentence(sent, word_list=self.tokenizer.tgt_itos)
-            if len(new_sent) < 10:
-                new_sent = sent
-            tokens = self.tokenizer.tokenize_src(new_sent)
-            self.src.append(tokens)
+        with Pool(self.num_worker) as p:
+            self.src = list(tqdm(p.imap(transform_sentence, self.corpus), total=len(self.corpus)))
+        self.src = [self.tokenizer.tokenize_src(x) for x in tqdm(self.src)]
+
 
     def __len__(self):
         return len(self.corpus)

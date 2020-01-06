@@ -1,7 +1,7 @@
 import numpy as np
 import visen
 
-CHAR_LIST = "abcdefghijklmnopqrstuvwxyzàáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ"
+CHAR_LIST = list("abcdefghijklmnopqrstuvwxyzàáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ")
 VOWEL_LIST = list("aeiouàáâãèéêìíòóôõùúýăđĩũơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ")
 CONSONANT_LIST = list("bcdfghjklmnpqrstvwxyz")
 
@@ -31,25 +31,49 @@ def substitute_char(word, num_char=1):
     return word
 
 
-def transform_sentence(sent, p_transform=0.4, p_del=0.1, p_ins=0.1, p_sub=0.8, 
-    p_transform_word={'del':0.5, 'sub':0.5},
-    word_list=None):
+def insert_char(word):
+    i = np.random.randint(len(word)+1)
+    t1 = word[i%len(word)] in VOWEL_LIST
+    t2 = word[i-1] in VOWEL_LIST
+    if t1 and t2:
+        c = np.random.choice(VOWEL_LIST)
+    elif not (t1 and t2):
+        c =  np.random.choice(CONSONANT_LIST)
+    else:
+        c = np.random.choice(CHAR_LIST)
+    word = word[:i] + c + word[i:]
+    return word
+
+
+def remove_tone(word):
+    word = visen.remove_tone(word)
+    return word
+
+def get_enter_code(word):
+    code = visen.format.get_enter_code(word)
+    return code
+
+def get_typo(word):
+    word = get_enter_code(word)
+    if len(word) < 2:
+        return word
+    num_del = [1,2]
+    pc = [0.85, 0.15]
+    if len(word) < 5:
+        num_del = [1,1]
+    n = np.random.choice(num_del, p=pc)
+    word = delete_char(word, n)
+    return word
+
+def transform_sentence(sent, p_transform=0.4, p_del=0.3, p_ins=0.3, p_sub=0.4):
     words = sent.split()
-    tf_type = np.random.choice([0,1,2,3], len(words), 
-        p=[1-p_transform, p_transform*p_del, p_transform*p_ins, p_transform*p_sub])
+    tf_type = np.random.choice([0,1], len(words), 
+        p=[1-p_transform, p_transform])
     for i,t in enumerate(tf_type):
         if t==1:
-            words[i] = ''
-        elif t==2:
-            iw = '[unk]'
-            if word_list:
-                ix = np.random.randint(len(word_list))
-                iw = word_list[ix]
-            words[i] = iw + ' ' + words[i]
-        elif t==3:
-            n_iter = np.random.randint(1,3)
-            funcs = np.random.choice([delete_char, substitute_char], n_iter, 
-                p=[p_transform_word['del'], p_transform_word['sub']])
+            n_iter = np.random.choice([1,2,3], p=[0.7, 0.25, 0.05])
+            funcs = np.random.choice([delete_char, insert_char, substitute_char], n_iter, 
+                p=[p_del, p_ins, p_sub])
             for func in funcs:
                 if len(words[i]) < 2:
                     break
