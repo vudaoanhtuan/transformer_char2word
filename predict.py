@@ -7,7 +7,8 @@ import torch
 import torch.nn as nn
 
 from model import Model
-from dataset import Dataset, Tokenizer, load_tokenizer, MaskDataset
+from dataset import Dataset, MaskDataset
+from tokenizer import Tokenizer, load_tokenizer
 from decode import greedy_decode
 
 
@@ -41,6 +42,7 @@ if __name__ == "__main__":
     model.load_state_dict(state)
 
     df = pd.read_csv(args.test_file)
+    df = df.rename(columns={"predict": "source"})
     predict = []
     for s in tqdm(df['source'].values):
         p = greedy_decode(model, tokenizer, s)
