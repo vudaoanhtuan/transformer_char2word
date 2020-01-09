@@ -22,6 +22,8 @@ class Dataset(data.Dataset):
         self.src = pad_sequences(self.src, maxlen=src_pad_len, value=tokenizer.pad, padding='post')
         self.tgt = pad_sequences(self.tgt, maxlen=tgt_pad_len, value=tokenizer.pad, padding='post')
 
+    def regenerate_source(self):
+        pass
 
     def __len__(self):
         return len(self.src)
