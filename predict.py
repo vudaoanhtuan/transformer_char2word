@@ -54,6 +54,6 @@ if __name__ == "__main__":
         predict.append(p)
 
     df['predict'] = predict
-    df.to_csv(args.test_file+"predict", index=False)
+    df.to_csv(args.test_file+".predict", index=False)
 
 
