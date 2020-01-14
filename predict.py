@@ -9,7 +9,7 @@ import torch.nn as nn
 from model import Model
 from dataset import Dataset, MaskDataset
 from tokenizer import Tokenizer, load_tokenizer
-from decode import greedy_decode
+from decode import greedy_decode, BeamDecode
 
 
 parser = argparse.ArgumentParser()
@@ -18,6 +18,8 @@ parser.add_argument('--tgt_vocab', required=True)
 parser.add_argument('--test_file', required=True)
 parser.add_argument('--model_weight', required=True)
 parser.add_argument('--model_config')
+parser.add_argument('--lm_path')
+parser.add_argument('--alpha', type=int, default=0)
 parser.add_argument('--device', default='cpu')
 
 if __name__ == "__main__":
@@ -41,11 +43,14 @@ if __name__ == "__main__":
     state = torch.load(args.model_weight)
     model.load_state_dict(state)
 
+    beam_decoder = BeamDecode(model, tokenizer, lm_path=args.lm_path, alpha=args.alpha)
+
     df = pd.read_csv(args.test_file)
     df = df.rename(columns={"predict": "source"})
     predict = []
     for s in tqdm(df['source'].values):
-        p = greedy_decode(model, tokenizer, s)
+        # p = greedy_decode(model, tokenizer, s)
+        p = beam_decoder.predict(s)
         predict.append(p)
 
     df['predict'] = predict
