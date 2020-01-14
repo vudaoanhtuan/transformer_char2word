@@ -43,6 +43,7 @@ if __name__ == "__main__":
     state = torch.load(args.model_weight)
     model.load_state_dict(state)
 
+    print("Init decoder")
     beam_decoder = BeamDecode(model, tokenizer, lm_path=args.lm_path, alpha=args.alpha)
 
     df = pd.read_csv(args.test_file)
