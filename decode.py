@@ -95,9 +95,12 @@ class BeamDecode():
                     new_log_score.append(i_score)
                     num_hyp += 1
                 i += 1
+            if len(completed_sent) > self.beam_size:
+                break
 
             hyps = new_hyps
             log_scores = new_log_score
+            
         completed_sent.sort(reverse=True)
         return completed_sent[:self.beam_size]
     
