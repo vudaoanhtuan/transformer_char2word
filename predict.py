@@ -19,7 +19,7 @@ parser.add_argument('--test_file', required=True)
 parser.add_argument('--model_weight', required=True)
 parser.add_argument('--model_config')
 parser.add_argument('--lm_path')
-parser.add_argument('--alpha', type=int, default=0)
+parser.add_argument('--alpha', type=float, default=0)
 parser.add_argument('--device', default='cpu')
 
 if __name__ == "__main__":
