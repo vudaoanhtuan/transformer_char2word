@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import kenlm
 
@@ -41,6 +42,10 @@ class BeamDecode():
         return ' '.join(sent)
 
     def beam_search(self, src):
+
+        src_len = src.count(" ") + 1
+        min_len = int(0.7*src_len)
+
         self.model.eval()
         src = self.tokenizer.tokenize_src(src)
         src = torch.tensor([src]).long()
@@ -88,7 +93,7 @@ class BeamDecode():
                 i_combined_score, i_score, i_sent, i_word = ix_candidates[i]
                 h = hyps[i_sent].copy()
                 h.append(i_word)
-                if i_word == self.tokenizer.eos and ix > 1: # eos at second token
+                if i_word == self.tokenizer.eos and ix > min_len: # eos at second token
                     len_norm_score = ((5.0 + len(h)) / 6.0) ** self.len_norm_alpha
                     completed_sent.append((i_combined_score / len_norm_score, h))
                 else:
@@ -108,3 +113,12 @@ class BeamDecode():
         pred = self.beam_search(src)[0][1][1:-1]
         sent = self.ix_to_sent(pred)
         return sent
+
+        # candidates = self.beam_search(src)
+        # candidates_len = [len(x[1]) for x in candidates]
+        # best_len = np.quantile(candidates_len, 0.8)
+        # for i,l in enumerate(candidates_len):
+        #     if l >= int(best_len):
+        #         sent_seq = candidates[i][1][1:-1]
+        #         sent = self.ix_to_sent(sent_seq)
+        #         return sent
