@@ -27,13 +27,14 @@ def greedy_decode(model, tokenizer, inp, max_len=100):
 
 
 class BeamDecode():
-    def __init__(self, model, tokenizer, beam_size=10, max_len=50, lm_path=None, alpha=0.0):
+    def __init__(self, model, tokenizer, beam_size=10, max_len=50, lm_path=None, alpha=0.0, len_norm_alpha=0.0):
         self.model = model
         self.tokenizer = tokenizer
         self.beam_size = beam_size
         self.max_len = max_len
         self.lm = kenlm.Model(lm_path)
         self.alpha = alpha
+        self.len_norm_alpha = len_norm_alpha
     
     def ix_to_sent(self, ixs):
         sent = [self.tokenizer.tgt_itos[x] for x in ixs]
@@ -53,9 +54,8 @@ class BeamDecode():
             tgt_mask = generate_square_subsequent_mask(ix) # TxT
             tgt_mask
             ix_candidates = []
-            n_hyps = self.beam_size
-            if ix==1:
-                n_hyps = 1
+            n_hyps = min(self.beam_size, len(hyps))
+
             for h in range(n_hyps):
                 tgt_inp = torch.tensor([hyps[h]], dtype=torch.long)
 
@@ -88,19 +88,17 @@ class BeamDecode():
                 i_combined_score, i_score, i_sent, i_word = ix_candidates[i]
                 h = hyps[i_sent].copy()
                 h.append(i_word)
-                if i_word == self.tokenizer.eos:
-                    completed_sent.append((i_combined_score, h))
+                if i_word == self.tokenizer.eos and ix > 1: # eos at second token
+                    len_norm_score = ((5.0 + len(h)) / 6.0) ** self.len_norm_alpha
+                    completed_sent.append((i_combined_score / len_norm_score, h))
                 else:
                     new_hyps.append(h)
                     new_log_score.append(i_score)
                     num_hyp += 1
                 i += 1
-            if len(completed_sent) > self.beam_size:
-                break
 
             hyps = new_hyps
             log_scores = new_log_score
-            
         completed_sent.sort(reverse=True)
         return completed_sent[:self.beam_size]
     
