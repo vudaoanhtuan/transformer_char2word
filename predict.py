@@ -18,6 +18,9 @@ parser.add_argument('--tgt_vocab', required=True)
 parser.add_argument('--test_file', required=True)
 parser.add_argument('--model_weight', required=True)
 parser.add_argument('--model_config')
+parser.add_argument('--beam_size', type=int, default=10)
+parser.add_argument('--max_len', type=int, default=50)
+parser.add_argument('--pc_min_len', type=float, default=0.8)
 parser.add_argument('--lm_path')
 parser.add_argument('--alpha', type=float, default=0)
 parser.add_argument('--len_norm_alpha', type=float, default=0)
@@ -45,7 +48,12 @@ if __name__ == "__main__":
     model.load_state_dict(state)
 
     print("Init decoder")
-    beam_decoder = BeamDecode(model, tokenizer, lm_path=args.lm_path, alpha=args.alpha)
+    beam_decoder = BeamDecode(
+        model, tokenizer, 
+        beam_size=args.beam_size, max_len=args.max_len, pc_min_len=args.pc_min_len,
+        lm_path=args.lm_path, alpha=args.alpha, 
+        len_norm_alpha=args.len_norm_alpha
+    )
 
     df = pd.read_csv(args.test_file)
     df = df.rename(columns={"predict": "source"})

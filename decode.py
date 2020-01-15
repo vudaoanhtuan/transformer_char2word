@@ -28,7 +28,7 @@ def greedy_decode(model, tokenizer, inp, max_len=100):
 
 
 class BeamDecode():
-    def __init__(self, model, tokenizer, beam_size=10, max_len=50, lm_path=None, alpha=0.0, len_norm_alpha=0.0):
+    def __init__(self, model, tokenizer, beam_size=10, max_len=50, pc_min_len=0.8, lm_path=None, alpha=0.0, len_norm_alpha=0.0):
         self.model = model
         self.tokenizer = tokenizer
         self.beam_size = beam_size
@@ -36,6 +36,7 @@ class BeamDecode():
         self.lm = kenlm.Model(lm_path)
         self.alpha = alpha
         self.len_norm_alpha = len_norm_alpha
+        self.pc_min_len = pc_min_len
     
     def ix_to_sent(self, ixs):
         sent = [self.tokenizer.tgt_itos[x] for x in ixs]
@@ -44,7 +45,7 @@ class BeamDecode():
     def beam_search(self, src):
 
         src_len = src.count(" ") + 1
-        min_len = int(0.7*src_len)
+        min_len = int(self.pc_min_len*src_len)
 
         self.model.eval()
         src = self.tokenizer.tokenize_src(src)
