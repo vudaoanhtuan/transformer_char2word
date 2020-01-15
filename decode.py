@@ -99,6 +99,8 @@ class BeamDecode():
 
             hyps = new_hyps
             log_scores = new_log_score
+            if len(completed_sent) > self.beam_size:
+                break
         completed_sent.sort(reverse=True)
         return completed_sent[:self.beam_size]
     
