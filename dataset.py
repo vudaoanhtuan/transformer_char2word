@@ -56,7 +56,7 @@ class MaskDataset(data.Dataset):
 
         self.regenerate_source()
 
-    def random_mask_tgt(self, x, pc_mask=0.3):
+    def random_mask_tgt(self, x, pc_mask=0.2):
         mask = np.random.choice([0,1], len(x), p=[1-pc_mask, pc_mask])
         x = np.where(mask==1, self.tokenizer.mask, x)
         return x

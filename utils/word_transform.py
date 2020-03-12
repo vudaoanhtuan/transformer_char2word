@@ -65,19 +65,29 @@ def get_typo(word):
     word = delete_char(word, n)
     return word
 
-def transform_sentence(sent, p_transform=0.4, p_del=0.3, p_ins=0.3, p_sub=0.4):
-    words = sent.split()
-    tf_type = np.random.choice([0,1], len(words), 
-        p=[1-p_transform, p_transform])
-    for i,t in enumerate(tf_type):
-        if t==1:
-            n_iter = np.random.choice([1,2,3], p=[0.7, 0.25, 0.05])
-            funcs = np.random.choice([delete_char, insert_char, substitute_char], n_iter, 
-                p=[p_del, p_ins, p_sub])
-            for func in funcs:
-                if len(words[i]) < 2:
-                    break
-                words[i] = func(words[i])
-    words = [w for w in words if w!='']
-    return ' '.join(words)
-
+def transform_sentence(sent, p_transform=0.6, p_del=0.3, p_ins=0.3, p_sub=0.4):
+    chance = np.random.choice([0,1,2], p=[0.05, 0.2, 0.75])
+    if chance == 1:
+        sent = visen.remove_tone(sent)
+        return sent
+    elif chance == 2:
+        words = sent.split()
+        p_transform = np.random.randint(10,int(p_transform*100)) * 0.01
+        tf_type = np.random.choice([0,1], len(words), 
+            p=[1-p_transform, p_transform])
+        for i,t in enumerate(tf_type):
+            if t==1:
+                is_rm_tone = np.random.choice([True, False], p=[0.4, 0.6])
+                if is_rm_tone:
+                    words[i] = remove_tone(words[i])
+                else:
+                    n_iter = np.random.choice([1,2,3], p=[0.8, 0.18, 0.02])
+                    funcs = np.random.choice([delete_char, insert_char, substitute_char], n_iter, 
+                        p=[p_del, p_ins, p_sub])
+                    for func in funcs:
+                        if len(words[i]) < 2:
+                            break
+                        words[i] = func(words[i])
+        words = [w for w in words if w!='']
+        return ' '.join(words)
+    return sent
