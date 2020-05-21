@@ -85,7 +85,6 @@ class Trainer:
             train_loss = self.run_iterator(self.train_dl)
             val_loss = self.run_iterator(self.test_dl, is_training=False)
             torch.save(self.model.state_dict(), os.path.join(self.weight_dir, 'model.%02d.h5'%epoch))
-            self.train_dl.dataset.regenerate_source()
             losses = {
                 "train_loss": train_loss,
                 "val_loss": val_loss
