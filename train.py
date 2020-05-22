@@ -21,8 +21,7 @@ parser.add_argument('--batch_size', default=32, type=int)
 parser.add_argument('--learning_rate', default=1e-3, type=float)
 parser.add_argument('--num_epoch', default=10, type=int)
 parser.add_argument('--device', default='cpu')
-parser.add_argument('--log_dir', default='logs')
-parser.add_argument('--weight_dir', default='weight')
+parser.add_argument('--name', default='model')
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -49,11 +48,20 @@ if __name__ == "__main__":
     model = Model(src_vocab_len, tgt_vocab_len, **config)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, betas=(0.9, 0.98), eps=1e-9)
     sched = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=len(train_dl))
+
+    if not os.path.isdir("checkpoint"):
+        os.mkdir("checkpoint")
+    model_path_name = os.path.join("checkpoint", args.name)
+    if not os.path.isdir(model_path_name):
+        os.mkdir(model_path_name)
+    log_dir = os.path.join(model_path_name, "log")
+    weight_dir = os.path.join(model_path_name, "weight")
+
     trainner = Trainer(
         model, optimizer, train_dl, test_dl, 
         device=args.device, scheduler=sched,
-        log_dir=args.log_dir,
-        weight_dir=args.weight_dir
+        log_dir=log_dir,
+        weight_dir=weight_dir
     )
 
     print("Start training")
