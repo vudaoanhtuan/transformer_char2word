@@ -13,27 +13,37 @@ from utils.word_transform import transform_sentence
 class SingleDataset(data.Dataset):
     def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=50):
         self.tokenizer = tokenizer
+        self.num_worker = cpu_count()
+
         self.src_pad_len = src_pad_len
         self.tgt_pad_len = tgt_pad_len
 
         with open(file_path) as f:
-            self.corpus = f.read().split("\n")[:-1]
+            self.corpus = f.read().split('\n')[:-1]
+
+        self.src = None
+        self.tgt = [tokenizer.tokenize_tgt(x) for x in tqdm(self.corpus)]
+        self.tgt = pad_sequences(self.tgt, maxlen=self.tgt_pad_len, value=self.tokenizer.pad, padding='post')
+
+        self.src_vocab_len = len(self.tokenizer.src_stoi)
+        self.tgt_vocab_len = len(self.tokenizer.tgt_stoi)
+
+        self.regenerate_source()
+
+    def regenerate_source(self):
+        del self.src
+        with Pool(self.num_worker) as p:
+            self.src = list(tqdm(p.imap(transform_sentence, self.corpus), total=len(self.corpus)))
+        self.src = [self.tokenizer.tokenize_src(x) for x in tqdm(self.src)]
+        self.src = pad_sequences(self.src, maxlen=self.src_pad_len, value=self.tokenizer.pad, padding='post')
+
 
     def __len__(self):
         return len(self.corpus)
 
     def __getitem__(self, index):
-        sent = self.corpus[index]
-
-        tgt_token = self.tokenizer.tokenize_tgt(sent)
-        tgt_inp = tgt_token[:-1]
-        tgt_lbl = tgt_token[1:]
-
-        sent = transform_sentence(sent)
-        src = self.tokenizer.tokenize_src(sent)
-
-        src = pad_sequences([src], maxlen=self.src_pad_len, value=self.tokenizer.pad, padding='post')[0]
-        tgt_inp = pad_sequences([tgt_inp], maxlen=self.tgt_pad_len, value=self.tokenizer.pad, padding='post')[0]
-        tgt_lbl = pad_sequences([tgt_lbl], maxlen=self.tgt_pad_len, value=self.tokenizer.pad, padding='post')[0]
+        src = self.src[index]
+        tgt_inp = self.tgt[index][:-1]
+        tgt_lbl = self.tgt[index][1:]
 
         return src, tgt_inp, tgt_lbl

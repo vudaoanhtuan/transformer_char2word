@@ -81,6 +81,7 @@ class Trainer:
 
     def train(self, num_epoch=10):
         for epoch in range(num_epoch):
+            epoch += 1
             print('\n[Epoch %d/%d] ========\n' % (epoch, num_epoch) ,flush=True, end='')
             train_loss = self.run_iterator(self.train_dl)
             val_loss = self.run_iterator(self.test_dl, is_training=False)
@@ -90,4 +91,6 @@ class Trainer:
                 "val_loss": val_loss
             }
             self.logger.update_epoch(losses, epoch)
+            if epoch != num_epoch:
+                self.train_dl.dataset.regenerate_source()
 
