@@ -11,7 +11,7 @@ from utils.preprocess_utils import pad_sequences
 from utils.word_transform import transform_sentence
 
 class SingleDataset(data.Dataset):
-    def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=50):
+    def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=50, seed=None):
         self.tokenizer = tokenizer
         self.num_worker = cpu_count()
 
@@ -28,6 +28,8 @@ class SingleDataset(data.Dataset):
         self.src_vocab_len = len(self.tokenizer.src_stoi)
         self.tgt_vocab_len = len(self.tokenizer.tgt_stoi)
 
+        if seed:
+            np.random.seed(seed)
         self.regenerate_source()
 
     def regenerate_source(self):
