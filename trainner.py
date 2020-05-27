@@ -79,10 +79,9 @@ class Trainer:
 
         return total_loss/total_item
 
-    def train(self, num_epoch=10):
-        for epoch in range(num_epoch):
-            epoch += 1
-            print('\n[Epoch %d/%d] ========\n' % (epoch, num_epoch) ,flush=True, end='')
+    def train(self, start_epoch=1, num_epoch=10):
+        for epoch in range(start_epoch, start_epoch+num_epoch):
+            print('\n[Epoch %d/%d] ========\n' % (epoch, start_epoch+num_epoch-1) ,flush=True, end='')
             train_loss = self.run_iterator(self.train_dl)
             val_loss = self.run_iterator(self.test_dl, is_training=False)
             torch.save(self.model.state_dict(), os.path.join(self.weight_dir, 'model.%02d.h5'%epoch))
