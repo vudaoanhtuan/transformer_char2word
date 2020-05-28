@@ -18,6 +18,8 @@ parser.add_argument('--train_file', required=True)
 parser.add_argument('--test_file', required=True)
 parser.add_argument('--model_config')
 parser.add_argument('--continue_from')
+parser.add_argument('--finetune_from')
+parser.add_argument('--transform_mode', default='simple')
 parser.add_argument('--batch_size', default=32, type=int)
 parser.add_argument('--learning_rate', default=1e-3, type=float)
 parser.add_argument('--num_epoch', default=10, type=int)
@@ -31,8 +33,9 @@ if __name__ == "__main__":
     tokenizer = load_tokenizer(args.src_vocab, args.tgt_vocab)
 
     print("Prepare data")
-    train_ds = SingleDataset(args.train_file, tokenizer)
-    test_ds = SingleDataset(args.test_file, tokenizer)
+    print("Transform function:", args.transform_mode)
+    train_ds = SingleDataset(args.train_file, tokenizer, mode=args.transform_mode)
+    test_ds = SingleDataset(args.test_file, tokenizer, mode=args.transform_mode)
     train_dl = DataLoader(train_ds, shuffle=True, batch_size=args.batch_size)
     test_dl = DataLoader(test_ds, shuffle=False, batch_size=args.batch_size)
 
@@ -49,12 +52,17 @@ if __name__ == "__main__":
     model = Model(src_vocab_len, tgt_vocab_len, **config)
 
     start_epoch = 1
-    if args.continue_from:
-        print("Load model from", args.continue_from)
-        state = torch.load(args.continue_from)
+    if args.continue_from or args.finetune_from:
+        model_path = args.finetune_from
+        if args.continue_from:
+            model_path = args.continue_from
+        print("Load model from", model_path)
+        state = torch.load(model_path)
         model.load_state_dict(state)
-        cur_epoch = os.path.basename(args.continue_from).split(".")[1]
-        start_epoch = int(cur_epoch)+1
+
+        if args.continue_from:
+            cur_epoch = os.path.basename(args.continue_from).split(".")[1]
+            start_epoch = int(cur_epoch)+1
 
 
 

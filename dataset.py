@@ -9,9 +9,10 @@ from tqdm import tqdm
 
 from utils.preprocess_utils import pad_sequences
 from utils.word_transform import transform_sentence
+from utils.teencode import transform_teencode
 
 class SingleDataset(data.Dataset):
-    def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=50, seed=None):
+    def __init__(self, file_path, tokenizer, src_pad_len=200, tgt_pad_len=50, seed=None, mode='simple'):
         self.tokenizer = tokenizer
         self.num_worker = cpu_count()
 
@@ -28,6 +29,7 @@ class SingleDataset(data.Dataset):
         self.src_vocab_len = len(self.tokenizer.src_stoi)
         self.tgt_vocab_len = len(self.tokenizer.tgt_stoi)
 
+        self.mode = mode
         if seed:
             np.random.seed(seed)
         self.regenerate_source()
@@ -35,7 +37,10 @@ class SingleDataset(data.Dataset):
     def regenerate_source(self):
         del self.src
         with Pool(self.num_worker) as p:
-            self.src = list(tqdm(p.imap(transform_sentence, self.corpus), total=len(self.corpus)))
+            if self.mode=='simple':
+                self.src = list(tqdm(p.imap(transform_sentence, self.corpus), total=len(self.corpus)))
+            else:
+                self.src = list(tqdm(p.imap(transform_teencode, self.corpus), total=len(self.corpus)))
         self.src = [self.tokenizer.tokenize_src(x) for x in tqdm(self.src)]
         self.src = pad_sequences(self.src, maxlen=self.src_pad_len, value=self.tokenizer.pad, padding='post')
 
