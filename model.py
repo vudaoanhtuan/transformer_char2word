@@ -48,7 +48,8 @@ class Model(nn.Module):
         d_model=256, nhead=8, 
         num_encoder_layers=3, num_decoder_layers=3, 
         dim_feedforward=1024, 
-        dropout=0.1, activation="relu"):
+        dropout=0.1, activation="relu",
+        init_param=True):
         super().__init__()
         self.src_padding_value = 0
         self.tgt_padding_value = 0
@@ -67,9 +68,10 @@ class Model(nn.Module):
 
         self.linear_out = nn.Linear(d_model, tgt_vocab_len)
 
-        for p in self.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_uniform_(p)
+        if init_param:
+            for p in self.parameters():
+                if p.dim() > 1:
+                    nn.init.xavier_uniform_(p)
 
 
     def encode(self, src_inp, src_padding_mask=None):
