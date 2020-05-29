@@ -33,8 +33,12 @@ class BeamDecode():
         self.tokenizer = tokenizer
         self.beam_size = beam_size
         self.max_len = max_len
-        self.lm = kenlm.Model(lm_path)
         self.alpha = alpha
+        if lm_path:
+            self.lm = kenlm.Model(lm_path)
+        else:
+            self.lm = None
+            self.alpha = 0.0
         self.len_norm_alpha = len_norm_alpha
         self.pc_min_len = pc_min_len
     
@@ -81,7 +85,10 @@ class BeamDecode():
                         sent = h_sent + " </s>"
                     else:
                         sent = h_sent + " " + self.tokenizer.tgt_itos[ki]
-                    combined_score = self.alpha * self.lm.score(sent, eos=False) + (1-self.alpha) * (log_scores[h] + kv)
+                    lm_score = 0;
+                    if self.lm:
+                        lm_score = self.lm.score(sent, eos=False)
+                    combined_score = self.alpha * lm_score + (1-self.alpha) * (log_scores[h] + kv)
                     ix_candidates.append((combined_score, log_scores[h] + kv, h, ki))
 
             ix_candidates.sort(reverse=True)
