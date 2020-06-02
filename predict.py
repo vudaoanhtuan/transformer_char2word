@@ -7,7 +7,6 @@ import torch
 import torch.nn as nn
 
 from model import Model
-from dataset import Dataset, MaskDataset
 from tokenizer import Tokenizer, load_tokenizer
 from decode import greedy_decode, BeamDecode
 
