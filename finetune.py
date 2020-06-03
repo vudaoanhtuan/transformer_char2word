@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from trainner import Trainer
 from model import Model
-from dataset import Dataset, MaskDataset
+from dataset import Dataset
 from tokenizer import Tokenizer, load_tokenizer
 
 parser = argparse.ArgumentParser()
