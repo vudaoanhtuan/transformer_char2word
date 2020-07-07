@@ -26,6 +26,24 @@ def greedy_decode(model, tokenizer, inp, max_len=100):
     sent = [tokenizer.tgt_itos[x] for x in seq[1:i]]
     return ' '.join(sent)
 
+class LanguageModel():
+    def __init__(self, lm_path=None):
+        self.lm = None
+        if lm_path:
+            self.lm = kenlm.Model(lm_path)
+
+    def score(self, sent):
+        if self.lm:
+            words_score = list(self.lm.full_scores(sent, eos=False))
+            last_word_score = words_score[-1][0]
+            return last_word_score
+        return 0.0
+
+    def score_sent(self, sent):
+        if self.lm:
+            return self.lm.score(sent, eos=False)
+        return 0.0
+
 
 class BeamDecode():
     def __init__(self, model, tokenizer, beam_size=10, max_len=50, pc_min_len=0.8, lm_path=None, alpha=0.0, len_norm_alpha=0.0):
@@ -35,7 +53,7 @@ class BeamDecode():
         self.max_len = max_len
         self.alpha = alpha
         if lm_path:
-            self.lm = kenlm.Model(lm_path)
+            self.lm = LanguageModel(lm_path)
         else:
             self.lm = None
             self.alpha = 0.0
@@ -87,7 +105,7 @@ class BeamDecode():
                         sent = h_sent + " " + self.tokenizer.tgt_itos[ki]
                     lm_score = 0;
                     if self.lm:
-                        lm_score = self.lm.score(sent, eos=False)
+                        lm_score = self.lm.score(sent)
                     combined_score = self.alpha * lm_score + (1-self.alpha) * (log_scores[h] + kv)
                     ix_candidates.append((combined_score, log_scores[h] + kv, h, ki))
 
