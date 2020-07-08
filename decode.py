@@ -44,6 +44,14 @@ class LanguageModel():
             return self.lm.score(sent, eos=False)
         return 0.0
 
+    def score_word(self, sent):
+        if self.lm:
+            words = sent.split()
+            if len(words) == 1:
+                return self.lm.score(sent, eos=False)
+            return self.lm.score(sent, eos=False) - self.lm.score(' '.join(words[:-1]), eos=False)
+        return 0.0
+
 
 class BeamDecode():
     def __init__(self, model, tokenizer, beam_size=10, max_len=50, pc_min_len=0.8, lm_path=None, alpha=0.0, len_norm_alpha=0.0):
@@ -105,7 +113,7 @@ class BeamDecode():
                         sent = h_sent + " " + self.tokenizer.tgt_itos[ki]
                     lm_score = 0;
                     if self.lm:
-                        lm_score = self.lm.score(sent)
+                        lm_score = self.lm.score_word(sent)
                     combined_score = self.alpha * lm_score + (1-self.alpha) * (log_scores[h] + kv)
                     ix_candidates.append((combined_score, log_scores[h] + kv, h, ki))
 
