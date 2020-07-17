@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import kenlm
 
-from model import generate_square_subsequent_mask
+from .model import generate_square_subsequent_mask
 
 def greedy_decode(model, tokenizer, inp, max_len=100):
     model.eval()
@@ -26,6 +26,7 @@ def greedy_decode(model, tokenizer, inp, max_len=100):
     sent = [tokenizer.tgt_itos[x] for x in seq[1:i]]
     return ' '.join(sent)
 
+
 class LanguageModel():
     def __init__(self, lm_path=None):
         self.lm = None
@@ -44,36 +45,30 @@ class LanguageModel():
             return self.lm.score(sent, eos=False)
         return 0.0
 
-    def score_word(self, sent):
-        if self.lm:
-            words = sent.split()
-            if len(words) == 1:
-                return self.lm.score(sent, eos=False)
-            return self.lm.score(sent, eos=False) - self.lm.score(' '.join(words[:-1]), eos=False)
-        return 0.0
-
-
 class BeamDecode():
     def __init__(self, model, tokenizer, beam_size=10, max_len=50, pc_min_len=0.8, lm_path=None, alpha=0.0, len_norm_alpha=0.0):
         self.model = model
         self.tokenizer = tokenizer
         self.beam_size = beam_size
         self.max_len = max_len
-        self.alpha = alpha
         if lm_path:
+            print("Loading", lm_path)
             self.lm = LanguageModel(lm_path)
+            self.alpha = alpha
         else:
             self.lm = None
             self.alpha = 0.0
+            
         self.len_norm_alpha = len_norm_alpha
         self.pc_min_len = pc_min_len
-    
+
+
     def ix_to_sent(self, ixs):
         sent = [self.tokenizer.tgt_itos[x] for x in ixs]
         return ' '.join(sent)
 
-    def beam_search(self, src):
 
+    def beam_search_arg(self, src, beam_size=10, max_len=50, pc_min_len=0.8, len_norm_alpha=0.0, alpha=0.0, ):
         src_len = src.count(" ") + 1
         min_len = int(self.pc_min_len*src_len)
 
@@ -86,11 +81,10 @@ class BeamDecode():
         log_scores = [0]
         completed_sent = []
 
-        for ix in range(1, self.max_len):
+        for ix in range(1, max_len):
             tgt_mask = generate_square_subsequent_mask(ix) # TxT
-            tgt_mask
             ix_candidates = []
-            n_hyps = min(self.beam_size, len(hyps))
+            n_hyps = min(beam_size, len(hyps))
 
             for h in range(n_hyps):
                 tgt_inp = torch.tensor([hyps[h]], dtype=torch.long)
@@ -99,7 +93,7 @@ class BeamDecode():
                 h_prob = torch.softmax(h_logit, dim=-1)
                 h_prob = h_prob[0,-1,:]
                 h_log_prob = h_prob.log10()
-                k_val, k_idx = h_log_prob.topk(self.beam_size)
+                k_val, k_idx = h_log_prob.topk(beam_size)
                 k_val = k_val.numpy().tolist()
                 k_idx = k_idx.numpy().tolist()
 
@@ -111,10 +105,10 @@ class BeamDecode():
                         sent = h_sent + " </s>"
                     else:
                         sent = h_sent + " " + self.tokenizer.tgt_itos[ki]
-                    lm_score = 0;
-                    if self.lm:
-                        lm_score = self.lm.score_word(sent)
-                    combined_score = self.alpha * lm_score + (1-self.alpha) * (log_scores[h] + kv)
+                    lm_score = 0.0
+                    if self.lm and alpha > 0.00001:
+                        lm_score = self.lm.score_sent(sent)
+                    combined_score = alpha * lm_score + (1-alpha) * (log_scores[h] + kv)
                     ix_candidates.append((combined_score, log_scores[h] + kv, h, ki))
 
             ix_candidates.sort(reverse=True)
@@ -123,12 +117,12 @@ class BeamDecode():
             new_log_score = []
             num_hyp = 0
             i = 0
-            while num_hyp < self.beam_size and i < len(ix_candidates):
+            while num_hyp < beam_size and i < len(ix_candidates):
                 i_combined_score, i_score, i_sent, i_word = ix_candidates[i]
                 h = hyps[i_sent].copy()
                 h.append(i_word)
                 if i_word == self.tokenizer.eos and ix > min_len: # eos at second token
-                    len_norm_score = ((5.0 + len(h)) / 6.0) ** self.len_norm_alpha
+                    len_norm_score = ((5.0 + len(h)) / 6.0) ** len_norm_alpha
                     completed_sent.append((i_combined_score / len_norm_score, h))
                 else:
                     new_hyps.append(h)
@@ -138,11 +132,16 @@ class BeamDecode():
 
             hyps = new_hyps
             log_scores = new_log_score
-            if len(completed_sent) > self.beam_size:
+            if len(completed_sent) > beam_size:
                 break
         completed_sent.sort(reverse=True)
-        return completed_sent[:self.beam_size]
-    
+        return completed_sent[:beam_size]
+
+
+    def beam_search(self, src):
+        return self.beam_search_arg(src, self.beam_size, self.max_len, self.pc_min_len, self.len_norm_alpha, self.alpha)
+
+
     def predict(self, src):
         pred = self.beam_search(src)[0][1][1:-1]
         sent = self.ix_to_sent(pred)
@@ -156,3 +155,29 @@ class BeamDecode():
         #         sent_seq = candidates[i][1][1:-1]
         #         sent = self.ix_to_sent(sent_seq)
         #         return sent
+    
+    def post_process(self, src, pred):
+        src = src.split()
+        pred = pred.split()
+        for i in range(min(len(src), len(pred))):
+            if pred[i] == '[unk]':
+                pred[i] = src[i]
+        return ' '.join(pred)
+
+    def predict_topk(self, src, beam_size=10, max_len=50, pc_min_len=0.8, len_norm_alpha=0.0, alpha=0.0,
+        post_process=True, re_scale=True):
+        preds = self.beam_search_arg(src, beam_size, max_len, pc_min_len, len_norm_alpha, alpha)
+        res = []
+        all_score = []
+        for score, tokens in preds:
+            text = self.ix_to_sent(tokens[1:-1])
+            if post_process:
+                text = self.post_process(src, text)
+            res.append([score, text])
+            all_score.append(score)
+        if re_scale:
+            fac = max(all_score)
+            fac = np.ceil(fac)
+            for i in range(len(res)):
+                res[i][0] -= fac
+        return res

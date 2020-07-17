@@ -72,5 +72,5 @@ def wer(ref, hyp, ignore_case=True):
         elif backtrace[i][j] == OP_DEL:
             numDel += 1
             i-=1
-    wer_result = (numSub + numDel + numIns) * 1.0 / (len(r))
-    return {'WER':wer_result, 'Cor':numCor, 'Sub':numSub, 'Ins':numIns, 'Del':numDel}
+    num_err = numSub + numDel + numIns
+    return num_err, len(r)
