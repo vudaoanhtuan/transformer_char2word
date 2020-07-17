@@ -15,5 +15,6 @@ if __name__ == "__main__":
     with open(args.out_file, 'w') as f:
         for ix in ids:
             sent = sents[ix]
+            sent = sent.strip()
             wrong_sent = transform_sentence(sent)
             f.write("%s|%s\n"%(wrong_sent, sent))
