@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import kenlm
 
-from .model import generate_square_subsequent_mask
+from model import generate_square_subsequent_mask
 
 def greedy_decode(model, tokenizer, inp, max_len=100):
     model.eval()
