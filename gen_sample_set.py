@@ -5,7 +5,7 @@ from utils.word_transform import transform_sentence
 parser = argparse.ArgumentParser()
 parser.add_argument('--test_file', required=True)
 parser.add_argument('--out_file', required=True)
-parser.add_argument('--num_sent', type=int, default=500)
+parser.add_argument('--num_sent', type=int, default=2000)
 
 if __name__ == "__main__":
     args = parser.parse_args()

@@ -69,9 +69,13 @@ if __name__ == "__main__":
                 s, 
                 beam_size=3, 
                 alpha=cur_alpha*0.01,
-                pc_min_len=0.8, len_norm_alpha=1.2
+                pc_min_len=0.8, len_norm_alpha=1.2,
+                post_process=False, re_scale=False
             )
-            pred = pred[0][1]
+            try:
+                pred = pred[0][1]
+            except:
+                pred = ''
             num_err, sent_len = wer(pred, l)
             total_err += num_err
             total_word += sent_len
