@@ -53,15 +53,15 @@ if __name__ == "__main__":
         data = f.read().split("\n")[:-1]
     
     result = []
-    for cur_alpha in range(0, 100, 5):
+    for cur_alpha in range(0, 101, 5):
 
         total_err = 0
         total_word = 0
         for line in data:
-            s,l = data.split("|")
+            s,l = line.split("|")
             pred = beam_decoder.predict_topk(
                 s, 
-                beam_size=3, 
+                beam_size=5, 
                 alpha=cur_alpha*0.01,
                 pc_min_len=0.8, len_norm_alpha=1.2
             )
