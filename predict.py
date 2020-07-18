@@ -123,6 +123,7 @@ if __name__ == "__main__":
     print("Load model")
     state = torch.load(args.model_weight)
     model.load_state_dict(state)
+    model.eval()
 
     print("Init decoder")
     beam_decoder = BeamDecode(
@@ -137,7 +138,14 @@ if __name__ == "__main__":
     predict = []
     for s in tqdm(df['source'].values):
         # p = greedy_decode(model, tokenizer, s)
-        p = beam_decoder.predict(s)
+        p = beam_decoder.predict(
+            s,
+            beam_size=args.beam_size, 
+            max_len=args.max_len, 
+            pc_min_len=args.pc_min_len,
+            alpha=args.alpha, 
+            len_norm_alpha=args.len_norm_alpha
+        )
         predict.append(p)
 
     df['predict'] = predict
