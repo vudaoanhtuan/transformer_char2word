@@ -61,7 +61,9 @@ if __name__ == "__main__":
         total_err = 0
         total_word = 0
         for line in data:
-            s,l = line.split("|")
+            line = line.split("|")
+            s = line[0]
+            l = line[1]
             pred = beam_decoder.predict_topk(
                 s, 
                 beam_size=5, 
