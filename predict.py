@@ -137,14 +137,7 @@ if __name__ == "__main__":
     predict = []
     for s in tqdm(df['source'].values):
         # p = greedy_decode(model, tokenizer, s)
-        p = beam_decoder.predict(
-            s,
-            beam_size=args.beam_size, 
-            max_len=args.max_len, 
-            pc_min_len=args.pc_min_len,
-            alpha=args.alpha, 
-            len_norm_alpha=args.len_norm_alpha
-        )
+        p = beam_decoder.predict(s)
         predict.append(p)
 
     df['predict'] = predict
