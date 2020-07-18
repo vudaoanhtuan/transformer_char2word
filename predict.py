@@ -119,10 +119,9 @@ if __name__ == "__main__":
     else:
         config = {}
 
-    model = Model(src_vocab_len, tgt_vocab_len, **config)
+    model = Model(src_vocab_len, tgt_vocab_len, init_param=False, **config)
     print("Load model")
-    state = torch.load(args.model_weight)
-    model.load_state_dict(state)
+    model.load_state_dict(torch.load(args.model_weight, map_location=torch.device('cpu')))
     model.eval()
 
     print("Init decoder")
