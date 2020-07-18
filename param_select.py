@@ -67,7 +67,7 @@ if __name__ == "__main__":
             l = line[1]
             pred = beam_decoder.predict_topk(
                 s, 
-                beam_size=5, 
+                beam_size=3, 
                 alpha=cur_alpha*0.01,
                 pc_min_len=0.8, len_norm_alpha=1.2
             )
