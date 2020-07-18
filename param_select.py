@@ -2,6 +2,8 @@ import os
 import argparse
 import json
 
+import pandas as pd
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -52,9 +54,10 @@ if __name__ == "__main__":
     with open(args.test_file) as f:
         data = f.read().split("\n")[:-1]
     
-    result = []
+    alphas = []
+    wers = []
     for cur_alpha in range(0, 101, 5):
-
+        alphas.append(cur_alpha*0.01)
         total_err = 0
         total_word = 0
         for line in data:
@@ -70,7 +73,14 @@ if __name__ == "__main__":
             total_err += num_err
             total_word += sent_len
         err = total_err*1.0/total_word
+        wers.append(err)
         print("%.2f | %.4f" % (cur_alpha*0.01, err))
-
+    
+    df = pd.DataFrame({
+        'alpha': alphas,
+        'wer': wers
+    })
+    
+    df.to_csv("param_select.csv", index=False)
 
 
