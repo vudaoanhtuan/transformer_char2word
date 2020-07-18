@@ -80,11 +80,11 @@ if __name__ == "__main__":
             beam_size.append(bs)
             run_time.append(com_time)
     
-    df_no_lm = pd.DataFrame{
+    df_no_lm = pd.DataFrame({
         'beam_size': beam_size,
         'sent_len': sent_len,
         'run_time': run_time
-    }
+    })
 
     df_no_lm.to_csv('time.nolm.csv', index=False)
 
@@ -112,10 +112,10 @@ if __name__ == "__main__":
             beam_size.append(bs)
             run_time.append(com_time)
     
-    df_lm = pd.DataFrame{
+    df_lm = pd.DataFrame({
         'beam_size': beam_size,
         'sent_len': sent_len,
         'run_time': run_time
-    }
+    })
 
     df_lm.to_csv('time.lm.csv', index=False)
