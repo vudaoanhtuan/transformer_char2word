@@ -2,8 +2,8 @@ import os
 import argparse
 import json
 import time
-
 import pandas as pd
+from tqdm import tqdm
 
 import torch
 import torch.nn as nn
