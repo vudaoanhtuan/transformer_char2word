@@ -1,7 +1,7 @@
 import os
 import argparse
 import json
-
+from tqdm import tqdm
 import pandas as pd
 
 import torch
@@ -56,7 +56,8 @@ if __name__ == "__main__":
     
     alphas = []
     wers = []
-    for cur_alpha in range(0, 101, 5):
+    print("Start")
+    for cur_alpha in tqdm(list(range(0, 101, 5))):
         alphas.append(cur_alpha*0.01)
         total_err = 0
         total_word = 0
