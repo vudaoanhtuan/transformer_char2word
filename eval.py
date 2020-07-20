@@ -58,24 +58,27 @@ if __name__ == "__main__":
 
     total_err = 0
     total_word = 0
-    for line in tqdm(data):
-        label = line.strip()
-        sent = transform_sentence(label)
-        pred = beam_decoder.predict_topk(
-            sent, 
-            beam_size=3, 
-            alpha=0.3,
-            max_len=200,
-            pc_min_len=0.8, len_norm_alpha=1.2,
-            post_process=False, re_scale=False
-        )
-        try:
-            pred = pred[0][1]
-        except:
-            pred = ''
-        num_err, sent_len = wer(pred, label)
-        total_err += num_err
-        total_word += sent_len
+    with tqdm(total=len(data)) as pbar:
+        for line in data:
+            label = line.strip()
+            sent = transform_sentence(label)
+            pred = beam_decoder.predict_topk(
+                sent, 
+                beam_size=3, 
+                alpha=0.3,
+                max_len=200,
+                pc_min_len=0.8, len_norm_alpha=1.2,
+                post_process=False, re_scale=False
+            )
+            try:
+                pred = pred[0][1]
+            except:
+                pred = ''
+            num_err, sent_len = wer(pred, label)
+            total_err += num_err
+            total_word += sent_len
+            pbar.update(1)
+            pbar.set_description("wer = %.6f" % (total_err*1.0/total_word))
 
     err = total_err*1.0/total_word
     print(err)
