@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from trainner import Trainer
 from model import Model
-from dataset import SingleDataset
+from dataset import SingleDataset, SingleMaskDataset
 from tokenizer import Tokenizer, load_tokenizer
 
 parser = argparse.ArgumentParser()
@@ -32,8 +32,8 @@ if __name__ == "__main__":
     tokenizer = load_tokenizer(args.src_vocab, args.tgt_vocab)
 
     print("Prepare data")
-    train_ds = SingleDataset(args.train_file, tokenizer)
-    test_ds = SingleDataset(args.test_file, tokenizer)
+    train_ds = SingleMaskDataset(args.train_file, tokenizer)
+    test_ds = SingleMaskDataset(args.test_file, tokenizer, mask=False)
     train_dl = DataLoader(train_ds, shuffle=True, batch_size=args.batch_size)
     test_dl = DataLoader(test_ds, shuffle=False, batch_size=args.batch_size)
 

@@ -70,7 +70,7 @@ def get_typo(word):
 from .teencode import to_teencode_1, to_teencode_2, to_teencode_3
 
 def transform_sentence(sent, p_transform=0.8, p_del=0.3, p_ins=0.3, p_sub=0.4):
-    chance = np.random.choice([0,1,2], p=[0.1, 0.3, 0.6])
+    chance = np.random.choice([0,1,2], p=[0.05, 0.1, 0.85])
     if chance == 1:
         sent = visen.remove_tone(sent)
         return sent
