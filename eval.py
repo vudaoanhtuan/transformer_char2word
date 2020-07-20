@@ -62,7 +62,7 @@ if __name__ == "__main__":
         label = line.strip()
         sent = transform_sentence(label)
         pred = beam_decoder.predict_topk(
-            s, 
+            sent, 
             beam_size=3, 
             alpha=0.3,
             max_len=200,
@@ -73,7 +73,7 @@ if __name__ == "__main__":
             pred = pred[0][1]
         except:
             pred = ''
-        num_err, sent_len = wer(pred, l)
+        num_err, sent_len = wer(pred, label)
         total_err += num_err
         total_word += sent_len
 
