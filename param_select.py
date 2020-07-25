@@ -69,8 +69,9 @@ if __name__ == "__main__":
                 s, 
                 beam_size=3, 
                 alpha=cur_alpha*0.01,
+                max_len=200,
                 pc_min_len=0.8, len_norm_alpha=1.2,
-                post_process=False, re_scale=False
+                post_process=True, re_scale=False
             )
             try:
                 pred = pred[0][1]
