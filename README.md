@@ -12,5 +12,5 @@ use `python3 train.py` with below required arguments:
 view `predict.py` for more infomation
 
 ## Note
-- Currently, the tokenizer will tokenize source sentences at character level, modify `tokenizer.py` to tokenize sentences at word level if you want  
+- Currently, the tokenizer will tokenize source sentences at character level, modify `tokenizer.py` to tokenize sentences at word level  
 - Do not use MaskDataset in `dataset.py`, it is not correct. Use Dataset instead  
